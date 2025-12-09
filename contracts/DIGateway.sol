@@ -8,6 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import "./interfaces/IDIGateway.sol";
 import "./interfaces/IDIAOracle.sol";
 import "./DIBridgedTokenRegistry.sol";
 import "./DIBridgedToken.sol";
@@ -16,71 +17,11 @@ import "./DIBridgedToken.sol";
  * @title DIGateway
  * @dev Updated gateway for omnichain bridging with CrossFi as hub
  */
-contract DIGateway is Ownable {
+contract DIGateway is IDIGateway, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
     using SignatureChecker for address;
     using ECDSA for bytes32;
-
-    struct BridgeTXInfo {
-        uint32 sourceChainId;
-        uint32 destChainId;
-        uint8 txType; // 0 = lock/mint, 1 = burn/unlock, 2 = message-only
-        string symbol;
-        string amount;
-        bytes payload;
-        bytes32 sourceTxHash;
-        bytes32 destTxHash;
-        uint32 timestamp;
-    }
-
-    // GMP Protocol structures
-    struct Command {
-        uint256 commandType;
-        bytes data;
-    }
-
-    DIBridgedTokenRegistry public tokenFactory;
-    EnumerableSet.AddressSet private relayers;
-
-    mapping(address => bool) public whitelisted;
-    mapping(bytes32 => bool) public commandExecuted;
-    mapping(bytes32 => BridgeTXInfo) public bridgeTransactions;
-
-    mapping(uint32 => bool) public supportedChains;
-    mapping(bytes32 => bytes) public approvedPayloads;
-
-    // Token management
-    struct TokenInfo {
-        bool supported;
-        address contractAddress;
-        string logoURI;
-        address priceFeed;
-        string priceKey;
-        bool useDIAOracle; // true for DIAOracle (CrossFi), false for Chainlink
-    }
-
-    struct TokenData {
-        string name;
-        string symbol;
-        uint8 decimals;
-        address contractAddress;
-        string logoURI;
-        address priceFeed;
-        string priceKey;
-        uint256 price;
-        uint8 priceDecimals;
-    }
-
-    mapping(string => TokenInfo) public supportedTokens;
-    string[] public tokenList;
-
-    // Bridge fee management
-    uint256 public feeInBps; // Fee in basis points (1 bps = 0.01%)
-    address public feeReceiver;
-    mapping(address => uint256) public tokenPriceInUsd;
-
-    uint32 public constant CROSSFI_CHAIN_ID = 4158; // Test - 4157, Main - 4158;
 
     // Command types
     uint256 public constant COMMAND_APPROVE_CONTRACT_CALL = 0;
@@ -95,71 +36,25 @@ contract DIGateway is Ownable {
     uint8 public constant MESSAGE_TYPE_CONTRACT_CALL = 0;
     uint8 public constant MESSAGE_TYPE_CONTRACT_CALL_WITH_TOKEN = 1;
     uint8 public constant MESSAGE_TYPE_TOKEN_TRANSFER = 2;
+    
+    uint32 public constant CROSSFI_CHAIN_ID = 4158; // Test - 4157, Main - 4158;
 
-    event BridgeTransactionLogged(bytes32 indexed txId, BridgeTXInfo txInfo);
-    event TokenLocked(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 destChainId
-    );
-    event TokenMinted(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 sourceChainId
-    );
-    event TokenBurned(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 destChainId
-    );
-    event TokenUnlocked(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 sourceChainId
-    );
-    event RelayerAdded(address indexed relayer);
-    event RelayerRemoved(address indexed relayer);
+    DIBridgedTokenRegistry public tokenFactory;
+    EnumerableSet.AddressSet private relayers;
 
-    // GMP Events
-    event CrossChainMessage(
-        address indexed sender,
-        uint32 destinationChainId,
-        address destinationAddress,
-        bytes32 indexed payloadHash,
-        bytes payload,
-        string symbol,
-        uint256 amount,
-        uint8 messageType
-    );
-    event Executed(bytes32 indexed commandId);
-    event ContractCallApproved(
-        bytes32 indexed commandId,
-        uint32 sourceChainId,
-        address indexed sourceAddress,
-        address indexed contractAddress,
-        bytes32 payloadHash,
-        bytes32 sourceTxHash,
-        uint256 sourceEventIndex
-    );
-    event ContractCallApprovedWithMint(
-        bytes32 indexed commandId,
-        uint32 sourceChainId,
-        address indexed sourceAddress,
-        address indexed contractAddress,
-        bytes32 payloadHash,
-        string symbol,
-        uint256 amount,
-        bytes32 sourceTxHash,
-        uint256 sourceEventIndex
-    );
-    event TokenAdded(string indexed symbol);
-    event TokenRemoved(string indexed symbol);
-    event BridgeFeeUpdated(uint256 feeInBps);
-    event FeeReceiverUpdated(address indexed feeReceiver);
+    mapping(address => bool) public whitelisted;
+    mapping(bytes32 => bool) public commandExecuted;
+    mapping(bytes32 => BridgeTXInfo) public bridgeTransactions;
+
+    mapping(uint32 => bool) public supportedChains;
+    mapping(string => TokenInfo) public supportedTokens;
+    mapping(bytes32 => bytes) public approvedPayloads;
+    string[] public tokenList;
+
+    // Bridge fee management
+    uint256 public feeInBps; // Fee in basis points (1 bps = 0.01%)
+    address public feeReceiver;
+
 
     constructor(
         address tokenFactory_,
@@ -537,6 +432,7 @@ contract DIGateway is Ownable {
         uint256 amount
     )
         external
+        payable // TODO: why bridge token logic is different than SendToken
         supportedChain(destinationChainId)
         supportedToken(symbol)
         nonZeroAmount(amount)
