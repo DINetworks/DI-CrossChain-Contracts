@@ -2,20 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {
-    IERC20,
-    IERC20Metadata
-} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {
-    SignatureChecker
-} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "./interfaces/IDIAOracle.sol";
 import "./DIBridgedTokenRegistry.sol";
@@ -55,8 +46,8 @@ contract DIGateway is Ownable {
     mapping(address => bool) public whitelisted;
     mapping(bytes32 => bool) public commandExecuted;
     mapping(bytes32 => BridgeTXInfo) public bridgeTransactions;
-    mapping(string => uint32) public chainIds;
-    mapping(uint32 => string) public chainNames;
+
+    mapping(uint32 => bool) public supportedChains;
     mapping(bytes32 => bytes) public approvedPayloads;
 
     // Token management
@@ -89,8 +80,7 @@ contract DIGateway is Ownable {
     address public feeReceiver;
     mapping(address => uint256) public tokenPriceInUsd;
 
-    // CrossFi chain ID
-    uint32 public constant CROSSFI_CHAIN_ID = 4157;
+    uint32 public constant CROSSFI_CHAIN_ID = 4158; // Test - 4157, Main - 4158;
 
     // Command types
     uint256 public constant COMMAND_APPROVE_CONTRACT_CALL = 0;
@@ -137,8 +127,8 @@ contract DIGateway is Ownable {
     // GMP Events
     event CrossChainMessage(
         address indexed sender,
-        string destinationChain,
-        string destinationAddress,
+        uint32 destinationChainId,
+        address destinationAddress,
         bytes32 indexed payloadHash,
         bytes payload,
         string symbol,
@@ -148,19 +138,19 @@ contract DIGateway is Ownable {
     event Executed(bytes32 indexed commandId);
     event ContractCallApproved(
         bytes32 indexed commandId,
-        string sourceChain,
-        string sourceAddress,
+        uint32 sourceChainId,
+        address indexed sourceAddress,
         address indexed contractAddress,
-        bytes32 indexed payloadHash,
+        bytes32 payloadHash,
         bytes32 sourceTxHash,
         uint256 sourceEventIndex
     );
     event ContractCallApprovedWithMint(
         bytes32 indexed commandId,
-        string sourceChain,
-        string sourceAddress,
+        uint32 sourceChainId,
+        address indexed sourceAddress,
         address indexed contractAddress,
-        bytes32 indexed payloadHash,
+        bytes32 payloadHash,
         string symbol,
         uint256 amount,
         bytes32 sourceTxHash,
@@ -182,19 +172,14 @@ contract DIGateway is Ownable {
 
         require(feeInBps_ <= 10000, "Fee cannot exceed 100%");
         require(feeReceiver_ != address(0), "Invalid fee receiver");
-        
+
         feeInBps = feeInBps_;
         feeReceiver = feeReceiver_;
 
-        // Initialize supported chains
-        chainIds["crossfi"] = CROSSFI_CHAIN_ID;
-        chainNames[CROSSFI_CHAIN_ID] = "crossfi";
-        chainIds["ethereum"] = 1;
-        chainNames[1] = "ethereum";
-        chainIds["bsc"] = 56;
-        chainNames[56] = "bsc";
-        chainIds["polygon"] = 137;
-        chainNames[137] = "polygon";
+        supportedChains[1] = true;
+        supportedChains[56] = true;
+        supportedChains[137] = true;
+        supportedChains[CROSSFI_CHAIN_ID] = true;
     }
 
     modifier onlyRelayer() {
@@ -209,6 +194,39 @@ contract DIGateway is Ownable {
 
     modifier notExecuted(bytes32 commandId) {
         require(!commandExecuted[commandId], "Command already executed");
+        _;
+    }
+
+    modifier nonZeroAmount(uint256 amount) {
+        require(amount > 0, "Amount must be greater than zero");
+        _;
+    }
+
+    modifier noZeroAddress(address addr) {
+        require(addr != address(0), "Invalid address");
+        _;
+    }
+
+    modifier validContract(address addr) {
+        require(
+            addr != address(0) || addr.code.length != 0,
+            "Invalid contract"
+        );
+        _;
+    }
+
+    modifier noZeroToken(address token) {
+        require(token != address(0), "Invalid token");
+        _;
+    }
+
+    modifier supportedChain(uint32 chainId) {
+        require(supportedChains[chainId], "Unsupported chain");
+        _;
+    }
+
+    modifier supportedToken(string memory symbol) {
+        require(supportedTokens[symbol].supported, "Token not supported");
         _;
     }
 
@@ -283,8 +301,8 @@ contract DIGateway is Ownable {
         string memory chainName,
         uint32 chainId
     ) external onlyOwner {
-        chainIds[chainName] = chainId;
-        chainNames[chainId] = chainName;
+        require(!supportedChains[chainId], "Already added");
+        supportedChains[chainId] = true;
     }
 
     function setBridgeFee(uint256 _feeInBps) external onlyOwner {
@@ -328,7 +346,14 @@ contract DIGateway is Ownable {
         string memory priceKey,
         bool useDIAOracle
     ) external onlyOwner {
-        _addToken(symbol, contractAddress, logoURI, priceFeed, priceKey, useDIAOracle);
+        _addToken(
+            symbol,
+            contractAddress,
+            logoURI,
+            priceFeed,
+            priceKey,
+            useDIAOracle
+        );
     }
 
     function addTokenWithMetadata(
@@ -339,11 +364,19 @@ contract DIGateway is Ownable {
         string memory priceKey,
         bool useDIAOracle
     ) external onlyOwner {
-        _addToken(symbol, contractAddress, logoURI, priceFeed, priceKey, useDIAOracle);
+        _addToken(
+            symbol,
+            contractAddress,
+            logoURI,
+            priceFeed,
+            priceKey,
+            useDIAOracle
+        );
     }
 
-    function removeToken(string memory symbol) external onlyOwner {
-        require(supportedTokens[symbol].supported, "Token not supported");
+    function removeToken(
+        string memory symbol
+    ) external supportedToken(symbol) onlyOwner {
         supportedTokens[symbol].supported = false;
         supportedTokens[symbol].contractAddress = address(0);
 
@@ -395,44 +428,55 @@ contract DIGateway is Ownable {
         return relayers.values();
     }
 
-    function getSupportedTokens() external view returns (TokenData[] memory tokens) {
+    function getSupportedTokens()
+        external
+        view
+        returns (TokenData[] memory tokens)
+    {
         tokens = new TokenData[](tokenList.length);
-        
+
         for (uint256 i = 0; i < tokenList.length; i++) {
             string memory symbol = tokenList[i];
             TokenInfo memory info = supportedTokens[symbol];
             address tokenAddr = info.contractAddress;
-            
+
             string memory name;
             uint8 decimals;
             uint256 price;
             uint8 priceDecimals;
-            
+
             if (tokenAddr == address(0)) {
                 name = "Native Token";
                 decimals = 18;
             } else {
-                try IERC20Metadata(tokenAddr).name() returns (string memory _name) {
+                try IERC20Metadata(tokenAddr).name() returns (
+                    string memory _name
+                ) {
                     name = _name;
                 } catch {
                     name = symbol;
                 }
-                
-                try IERC20Metadata(tokenAddr).decimals() returns (uint8 _decimals) {
+
+                try IERC20Metadata(tokenAddr).decimals() returns (
+                    uint8 _decimals
+                ) {
                     decimals = _decimals;
                 } catch {
                     decimals = 18;
                 }
             }
-            
-            try this.getTokenPrice(symbol) returns (uint256 _price, uint8 _priceDecimals) {
+
+            try this.getTokenPrice(symbol) returns (
+                uint256 _price,
+                uint8 _priceDecimals
+            ) {
                 price = _price;
                 priceDecimals = _priceDecimals;
             } catch {
                 price = 0;
                 priceDecimals = 0;
             }
-            
+
             tokens[i] = TokenData({
                 name: name,
                 symbol: symbol,
@@ -445,7 +489,7 @@ contract DIGateway is Ownable {
                 priceDecimals: priceDecimals
             });
         }
-        
+
         return tokens;
     }
 
@@ -463,24 +507,19 @@ contract DIGateway is Ownable {
 
     // GMP Protocol Core Functions
     function callContract(
-        string memory destinationChain,
-        string memory destinationContractAddress,
+        uint32 destinationChainId,
+        address destinationContractAddress,
         bytes memory payload
-    ) external {
-        require(
-            chainIds[destinationChain] > 0,
-            "Unsupported destination chain"
-        );
-        require(
-            bytes(destinationContractAddress).length > 0,
-            "Invalid destination address"
-        );
-
+    )
+        external
+        supportedChain(destinationChainId)
+        validContract(destinationContractAddress)
+    {
         bytes32 payloadHash = keccak256(payload);
 
         emit CrossChainMessage(
             msg.sender,
-            destinationChain,
+            destinationChainId,
             destinationContractAddress,
             payloadHash,
             payload,
@@ -491,23 +530,18 @@ contract DIGateway is Ownable {
     }
 
     function callContractWithToken(
-        string memory destinationChain,
-        string memory destinationContractAddress,
+        uint32 destinationChainId,
+        address destinationContractAddress,
         bytes memory payload,
         string memory symbol,
         uint256 amount
-    ) external {
-        require(
-            chainIds[destinationChain] > 0,
-            "Unsupported destination chain"
-        );
-        require(
-            bytes(destinationContractAddress).length > 0,
-            "Invalid destination address"
-        );
-        require(amount > 0, "Amount must be greater than zero");
-        require(supportedTokens[symbol].supported, "Token not supported");
-
+    )
+        external
+        supportedChain(destinationChainId)
+        supportedToken(symbol)
+        nonZeroAmount(amount)
+        validContract(destinationContractAddress)
+    {
         // Get token address from factory
         address token = tokenFactory.getToken(uint32(block.chainid), symbol);
         require(token != address(0), "Token not found");
@@ -519,7 +553,7 @@ contract DIGateway is Ownable {
 
         emit CrossChainMessage(
             msg.sender,
-            destinationChain,
+            destinationChainId,
             destinationContractAddress,
             payloadHash,
             payload,
@@ -530,46 +564,51 @@ contract DIGateway is Ownable {
     }
 
     function sendToken(
-        string memory destinationChain,
-        string memory destinationAddress,
+        uint32 destinationChainId,
+        address destinationAddress,
         string memory symbol,
         uint256 amount
-    ) external payable {
-        require(
-            chainIds[destinationChain] > 0,
-            "Unsupported destination chain"
-        );
-        require(
-            bytes(destinationAddress).length > 0,
-            "Invalid destination address"
-        );
-        require(amount > 0, "Amount must be greater than zero");
-        require(supportedTokens[symbol].supported, "Token not supported");
-
+    )
+        external
+        payable
+        supportedChain(destinationChainId)
+        noZeroAddress(destinationAddress)
+        supportedToken(symbol)
+        nonZeroAmount(amount)
+    {
         address token = supportedTokens[symbol].contractAddress;
-        
         if (token == address(0)) {
             // Native token - receive native token
             require(msg.value == amount, "Incorrect native token amount");
         } else {
             // Check if it's a bridged token
-            try DIBridgedToken(token).isBridgedToken() returns (bool isBridged) {
+            try DIBridgedToken(token).isBridgedToken() returns (
+                bool isBridged
+            ) {
                 if (isBridged) {
                     // Bridged token - burn
                     DIBridgedToken(token).burn(msg.sender, amount);
                 } else {
                     // Regular token - lock
-                    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+                    IERC20(token).safeTransferFrom(
+                        msg.sender,
+                        address(this),
+                        amount
+                    );
                 }
             } catch {
                 // Regular token - lock
-                IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+                IERC20(token).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    amount
+                );
             }
         }
 
         emit CrossChainMessage(
             msg.sender,
-            destinationChain,
+            destinationChainId,
             destinationAddress,
             bytes32(0),
             "",
@@ -625,13 +664,54 @@ contract DIGateway is Ownable {
         }
     }
 
+    function _validateMint(
+        address to,
+        uint256 amount
+    ) internal pure nonZeroAmount(amount) noZeroAddress(to) {}
+
+    function _validateBurn(
+        address from,
+        uint256 amount
+    ) internal pure nonZeroAmount(amount) noZeroAddress(from) {}
+
+    function _validateLock(
+        address from,
+        uint256 amount,
+        address token
+    )
+        internal
+        pure
+        nonZeroAmount(amount)
+        noZeroAddress(from)
+        noZeroToken(token)
+    {}
+
+    function _validateUnlock(
+        address to,
+        uint256 amount,
+        address token
+    )
+        internal
+        pure
+        nonZeroAmount(amount)
+        noZeroAddress(to)
+        noZeroToken(token)
+    {}
+
+    function _validateSendNative(
+        address to,
+        uint256 amount
+    ) internal view nonZeroAmount(amount) noZeroAddress(to) {
+        require(address(this).balance >= amount, "Insufficient native balance");
+    }
+
     function _approveContractCall(
         bytes32 commandId,
         bytes memory data
     ) internal {
         (
-            string memory sourceChain,
-            string memory sourceAddress,
+            uint32 sourceChainId,
+            address sourceAddress,
             address contractAddress,
             bytes32 payloadHash,
             bytes32 sourceTxHash,
@@ -639,7 +719,7 @@ contract DIGateway is Ownable {
             bytes memory payload
         ) = abi.decode(
                 data,
-                (string, string, address, bytes32, bytes32, uint256, bytes)
+                (uint32, address, address, bytes32, bytes32, uint256, bytes)
             );
 
         require(keccak256(payload) == payloadHash, "Invalid payload hash");
@@ -648,7 +728,7 @@ contract DIGateway is Ownable {
 
         emit ContractCallApproved(
             commandId,
-            sourceChain,
+            sourceChainId,
             sourceAddress,
             contractAddress,
             payloadHash,
@@ -661,7 +741,7 @@ contract DIGateway is Ownable {
             try
                 this._safeExecuteCall(
                     commandId,
-                    sourceChain,
+                    sourceChainId,
                     sourceAddress,
                     contractAddress,
                     payload
@@ -675,8 +755,8 @@ contract DIGateway is Ownable {
         bytes memory data
     ) internal {
         (
-            string memory sourceChain,
-            string memory sourceAddress,
+            uint32 sourceChainId,
+            address sourceAddress,
             address contractAddress,
             bytes32 payloadHash,
             string memory symbol,
@@ -687,8 +767,8 @@ contract DIGateway is Ownable {
         ) = abi.decode(
                 data,
                 (
-                    string,
-                    string,
+                    uint32,
+                    address,
                     address,
                     bytes32,
                     string,
@@ -706,15 +786,18 @@ contract DIGateway is Ownable {
         // Mint tokens to contract
         address token = tokenFactory.getToken(uint32(block.chainid), symbol);
         require(token != address(0), "Token not found");
-        uint256 bridgeTransactionsFee = amount * feeInBps / 10_000;
+        uint256 bridgeTransactionsFee = (amount * feeInBps) / 10_000;
 
-        DIBridgedToken(token).mint(contractAddress, amount - bridgeTransactionsFee);
+        DIBridgedToken(token).mint(
+            contractAddress,
+            amount - bridgeTransactionsFee
+        );
         DIBridgedToken(token).mint(feeReceiver, bridgeTransactionsFee);
         // DIBridgedToken(token).mint(contractAddress, amount);
 
         emit ContractCallApprovedWithMint(
             commandId,
-            sourceChain,
+            sourceChainId,
             sourceAddress,
             contractAddress,
             payloadHash,
@@ -729,7 +812,7 @@ contract DIGateway is Ownable {
             try
                 this._safeExecuteCallWithToken(
                     commandId,
-                    sourceChain,
+                    sourceChainId,
                     sourceAddress,
                     contractAddress,
                     payload,
@@ -740,45 +823,57 @@ contract DIGateway is Ownable {
         }
     }
 
-    function getTokenPrice(string memory symbol) public view returns (uint256 price, uint8 decimals) {
+    function getTokenPrice(
+        string memory symbol
+    ) public view returns (uint256 price, uint8 decimals) {
         TokenInfo memory info = supportedTokens[symbol];
-        
+
         if (info.priceFeed == address(0)) {
             return (0, 0);
         }
-        
+
         if (info.useDIAOracle) {
             // Use DIAOracle for CrossFi
-            (uint128 priceValue, uint128 timestamp) = IDIAOracle(info.priceFeed).getValue(info.priceKey);
+            (uint128 priceValue, uint128 timestamp) = IDIAOracle(info.priceFeed)
+                .getValue(info.priceKey);
             require(timestamp > 0, "Invalid price timestamp");
             return (uint256(priceValue), 8); // DIA returns 8 decimals
         } else {
             // Use Chainlink AggregatorV3Interface
-            (, int256 answer, , uint256 updatedAt, ) = AggregatorV3Interface(info.priceFeed).latestRoundData();
+            (, int256 answer, , uint256 updatedAt, ) = AggregatorV3Interface(
+                info.priceFeed
+            ).latestRoundData();
             require(answer > 0, "Invalid price");
             require(updatedAt > 0, "Invalid timestamp");
-            uint8 priceFeedDecimals = AggregatorV3Interface(info.priceFeed).decimals();
+            uint8 priceFeedDecimals = AggregatorV3Interface(info.priceFeed)
+                .decimals();
             return (uint256(answer), priceFeedDecimals);
         }
     }
 
-    function estimateBridgeFee(string memory symbol, uint256 amount) public view returns(uint256 fee, uint256 feeInUsd) {
-        fee = amount * feeInBps / 10_000;
-        
+    function estimateBridgeFee(
+        string memory symbol,
+        uint256 amount
+    ) public view returns (uint256 fee, uint256 feeInUsd) {
+        fee = (amount * feeInBps) / 10_000;
+
         TokenInfo memory info = supportedTokens[symbol];
         address token = info.contractAddress;
-        
+
         if (token != address(0) && info.priceFeed != address(0)) {
             uint8 tokenDecimals = IERC20Metadata(token).decimals();
             (uint256 price, uint8 priceDecimals) = getTokenPrice(symbol);
-            
+
             // Calculate fee in USD: (fee * price) / (10^tokenDecimals) * (10^6) / (10^priceDecimals)
             // Result in 6 decimals USD
-            feeInUsd = (fee * price * 1e6) / (10 ** tokenDecimals) / (10 ** priceDecimals);
+            feeInUsd =
+                (fee * price * 1e6) /
+                (10 ** tokenDecimals) /
+                (10 ** priceDecimals);
         } else {
             feeInUsd = 0;
         }
-        
+
         return (fee, feeInUsd);
     }
 
@@ -803,8 +898,7 @@ contract DIGateway is Ownable {
             (address, uint256, string)
         );
 
-        require(amount > 0, "Amount must be greater than zero");
-        require(from != address(0), "Invalid sender");
+        _validateBurn(from, amount);
 
         address token = tokenFactory.getToken(uint32(block.chainid), symbol);
         require(token != address(0), "Token not found");
@@ -818,9 +912,7 @@ contract DIGateway is Ownable {
             (address, uint256, address)
         );
 
-        require(amount > 0, "Amount must be greater than zero");
-        require(from != address(0), "Invalid sender");
-        require(token != address(0), "Invalid token");
+        _validateLock(from, amount, token);
 
         IERC20(token).safeTransferFrom(from, address(this), amount);
     }
@@ -831,22 +923,15 @@ contract DIGateway is Ownable {
             (address, uint256, address)
         );
 
-        require(amount > 0, "Amount must be greater than zero");
-        require(to != address(0), "Invalid recipient");
-        require(token != address(0), "Invalid token");
+        _validateUnlock(to, amount, token);
 
         IERC20(token).safeTransfer(to, amount);
     }
 
     function _sendNative(bytes memory data) internal {
-        (address to, uint256 amount) = abi.decode(
-            data,
-            (address, uint256)
-        );
+        (address to, uint256 amount) = abi.decode(data, (address, uint256));
 
-        require(amount > 0, "Amount must be greater than zero");
-        require(to != address(0), "Invalid recipient");
-        require(address(this).balance >= amount, "Insufficient native balance");
+        _validateSendNative(to, amount);
 
         (bool success, ) = payable(to).call{value: amount}("");
         require(success, "Native token transfer failed");
@@ -854,8 +939,8 @@ contract DIGateway is Ownable {
 
     function _safeExecuteCall(
         bytes32 commandId,
-        string memory sourceChain,
-        string memory sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         address contractAddress,
         bytes memory payload
     ) external {
@@ -863,9 +948,9 @@ contract DIGateway is Ownable {
 
         (bool success, ) = contractAddress.call(
             abi.encodeWithSignature(
-                "execute(bytes32,string,string,bytes)",
+                "execute(bytes32,uint32,address,bytes)",
                 commandId,
-                sourceChain,
+                sourceChainId,
                 sourceAddress,
                 payload
             )
@@ -876,8 +961,8 @@ contract DIGateway is Ownable {
 
     function _safeExecuteCallWithToken(
         bytes32 commandId,
-        string memory sourceChain,
-        string memory sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         address contractAddress,
         bytes memory payload,
         string memory symbol,
@@ -887,9 +972,9 @@ contract DIGateway is Ownable {
 
         (bool success, ) = contractAddress.call(
             abi.encodeWithSignature(
-                "executeWithToken(bytes32,string,string,bytes,string,uint256)",
+                "executeWithToken(bytes32,uint32,address,bytes,string,uint256)",
                 commandId,
-                sourceChain,
+                sourceChainId,
                 sourceAddress,
                 payload,
                 symbol,
@@ -903,8 +988,8 @@ contract DIGateway is Ownable {
     // Utility functions
     function isContractCallApproved(
         bytes32 commandId,
-        string calldata,
-        string calldata,
+        uint32,
+        address,
         address,
         bytes32
     ) external view returns (bool) {
@@ -913,8 +998,8 @@ contract DIGateway is Ownable {
 
     function isContractCallAndMintApproved(
         bytes32 commandId,
-        string calldata,
-        string calldata,
+        uint32,
+        address,
         address,
         bytes32,
         string calldata,
@@ -931,8 +1016,8 @@ contract DIGateway is Ownable {
 
     function validateContractCall(
         bytes32 commandId,
-        string calldata,
-        string calldata,
+        uint32,
+        address,
         bytes32 payloadHash
     ) external view returns (bool) {
         if (!commandExecuted[commandId]) return false;
@@ -943,8 +1028,8 @@ contract DIGateway is Ownable {
 
     function validateContractCallAndMint(
         bytes32 commandId,
-        string calldata,
-        string calldata,
+        uint32,
+        address,
         bytes32 payloadHash,
         string calldata,
         uint256

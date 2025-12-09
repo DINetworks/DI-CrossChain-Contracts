@@ -26,9 +26,6 @@ interface IDIGateway {
     event TokenUnlocked(address indexed token, address indexed user, uint256 amount, uint32 sourceChainId);
     
     // GMP Events
-    event ContractCall(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload);
-    event ContractCallWithToken(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload, string symbol, uint256 amount);
-    event TokenSent(address indexed sender, string destinationChain, string destinationAddress, string symbol, uint256 amount);
     event Executed(bytes32 indexed commandId);
     
     function getBridgeTransaction(bytes32 txId) external view returns (BridgeTXInfo memory);
@@ -36,22 +33,22 @@ interface IDIGateway {
     
     // GMP Functions
     function callContract(
-        string memory destinationChain,
-        string memory destinationContractAddress,
+        uint32 destinationChainId,
+        address destinationContractAddress,
         bytes memory payload
     ) external;
     
     function callContractWithToken(
-        string memory destinationChain,
-        string memory destinationContractAddress,
+        uint32 destinationChainId,
+        address destinationContractAddress,
         bytes memory payload,
         string memory symbol,
         uint256 amount
     ) external;
     
     function sendToken(
-        string memory destinationChain,
-        string memory destinationAddress,
+        uint32 destinationChainId,
+        address destinationAddress,
         string memory symbol,
         uint256 amount
     ) external;
@@ -64,15 +61,15 @@ interface IDIGateway {
     
     function validateContractCall(
         bytes32 commandId,
-        string calldata sourceChain,
-        string calldata sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes32 payloadHash
     ) external view returns (bool);
     
     function validateContractCallAndMint(
         bytes32 commandId,
-        string calldata sourceChain,
-        string calldata sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes32 payloadHash,
         string calldata symbol,
         uint256 amount

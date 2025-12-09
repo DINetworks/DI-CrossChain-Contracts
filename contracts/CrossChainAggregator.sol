@@ -36,7 +36,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
     // Cross-chain swap request
     struct CrossChainSwapRequest {
         address user;              // Original user address
-        string destinationChain;   // Target chain name
+        uint32 destinationChainId;   // Target chain id
         address destinationToken;  // Target token on destination chain
         uint256 amountOutMin;      // Minimum amount out on destination
         uint256 deadline;          // Swap deadline
@@ -49,7 +49,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
         address indexed user,
         address indexed tokenIn,
         uint256 amountIn,
-        string destinationChain,
+        uint32 destinationChainId,
         address indexed destinationToken,
         bytes32 swapId
     );
@@ -87,7 +87,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
     /**
      * @notice Initiate cross-chain swap: TokenA -> IXFI -> TokenB
      * @param swapData Source chain swap data (TokenA -> IXFI)
-     * @param destinationChain Target chain name
+     * @param destinationChainId Target chain id
      * @param destinationToken Target token address
      * @param destinationSwapData Encoded swap data for destination chain
      * @param destinationRouter Router address on destination chain
@@ -95,7 +95,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
      */
     function crossChainSwap(
         SwapData calldata swapData,
-        string calldata destinationChain,
+        uint32 destinationChainId,
         address destinationToken,
         bytes calldata destinationSwapData,
         address destinationRouter,
@@ -110,7 +110,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
             msg.sender,
             swapData.tokenIn,
             swapData.amountIn,
-            destinationChain,
+            destinationChainId,
             destinationToken,
             block.timestamp,
             block.number
@@ -119,7 +119,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
         // Store cross-chain swap request
         swapRequests[swapId] = CrossChainSwapRequest({
             user: msg.sender,
-            destinationChain: destinationChain,
+            destinationChainId: destinationChainId,
             destinationToken: destinationToken,
             amountOutMin: amountOutMin,
             deadline: swapData.deadline,
@@ -152,8 +152,8 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
 
         // Bridge tokens to destination chain with swap instructions
         diGateway.callContractWithToken(
-            destinationChain,
-            _getAggregatorAddress(destinationChain),
+            destinationChainId,
+            _getAggregatorAddress(destinationChainId),
             payload,
             "XUSD",
             ixfiAmount
@@ -163,7 +163,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
             msg.sender,
             swapData.tokenIn,
             swapData.amountIn,
-            destinationChain,
+            destinationChainId,
             destinationToken,
             swapId
         );
@@ -174,7 +174,7 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
      * @dev Called by IXFI gateway when receiving cross-chain message
      */
     function _executeWithToken(
-        string calldata, /* sourceChain */
+        uint32, /* sourceChain */
         string calldata, /* sourceAddress */
         bytes calldata payload,
         string calldata tokenSymbol,
@@ -292,10 +292,10 @@ contract CrossChainAggregator is DIExecutable, Ownable, ReentrancyGuard {
      * @notice Get aggregator address on destination chain
      * @return Aggregator contract address on destination chain
      */
-    function _getAggregatorAddress(string memory /* chainName */) internal view returns (string memory) {
+    function _getAggregatorAddress(uint32 /* chainName */) internal view returns (address) {
         // In practice, this would be a mapping of chain names to aggregator addresses
         // For now, we'll use the same address format
-        return _addressToString(address(this));
+        return address(this);
     }
 
     /**

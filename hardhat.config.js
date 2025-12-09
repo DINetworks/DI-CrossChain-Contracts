@@ -25,9 +25,14 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    "crossfi": {
+    "crossfiTestnet": {
       chainId: 4157,
       url: process.env.RPC_URL,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+    "crossfi": {
+      chainId: 4158,
+      url: process.env.RPC_TESTNET_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
     mainnet: {

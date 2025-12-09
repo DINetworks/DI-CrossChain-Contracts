@@ -21,35 +21,35 @@ abstract contract DIExecutable {
     
     function execute(
         bytes32 commandId,
-        string calldata sourceChain,
-        string calldata sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes calldata payload
     ) external onlyGateway {
-        _execute(commandId, sourceChain, sourceAddress, payload);
+        _execute(commandId, sourceChainId, sourceAddress, payload);
     }
     
     function executeWithToken(
         bytes32 commandId,
-        string calldata sourceChain,
-        string calldata sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes calldata payload,
         string calldata tokenSymbol,
         uint256 amount
     ) external onlyGateway {
-        _executeWithToken(commandId, sourceChain, sourceAddress, payload, tokenSymbol, amount);
+        _executeWithToken(commandId, sourceChainId, sourceAddress, payload, tokenSymbol, amount);
     }
     
     function _execute(
         bytes32 commandId,
-        string memory sourceChain,
-        string memory sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes calldata payload
     ) internal virtual {}
     
     function _executeWithToken(
         bytes32 commandId,
-        string memory sourceChain,
-        string memory sourceAddress,
+        uint32 sourceChainId,
+        address sourceAddress,
         bytes calldata payload,
         string memory tokenSymbol,
         uint256 amount

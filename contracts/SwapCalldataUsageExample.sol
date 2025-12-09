@@ -26,7 +26,7 @@ contract SwapCalldataUsageExample {
         address tokenOut,
         uint256 amountIn,
         uint256 expectedAmountOut,
-        string destinationChain,
+        uint32 destinationChainId,
         QuoteLibrary.RouterType routerType
     );
     
@@ -49,7 +49,7 @@ contract SwapCalldataUsageExample {
      * @param tokenIn Input token address
      * @param tokenOut Output token address (on destination chain)
      * @param amountIn Amount of input tokens
-     * @param destinationChain Name of destination chain
+     * @param destinationChainId id of destination chain
      * @param destinationAddress Recipient address on destination chain
      * @param routerType Type of DEX router to use
      * @param slippageBps Slippage tolerance in basis points (e.g., 300 = 3%)
@@ -58,8 +58,8 @@ contract SwapCalldataUsageExample {
         address tokenIn,
         address tokenOut,
         uint256 amountIn,
-        string calldata destinationChain,
-        string calldata destinationAddress,
+        uint32 destinationChainId,
+        address destinationAddress,
         QuoteLibrary.RouterType routerType,
         uint256 slippageBps
     ) external {
@@ -70,8 +70,9 @@ contract SwapCalldataUsageExample {
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
 
         // Get destination chain ID (simplified - you'd need to implement this mapping)
-        uint256 destinationChainId = _getChainId(destinationChain);
-        require(destinationChainId > 0, "Unsupported destination chain");
+        // TODO: destinationChainId
+        // uint256 destinationChainId = _getChainId(destinationChain);
+        // require(destinationChainId > 0, "Unsupported destination chain");
 
         // Get router config for destination chain
         (address routerAddress, QuoteLibrary.RouterType configuredType, bool isActive) = calldataGenerator.routers(destinationChainId, routerType);
@@ -116,7 +117,7 @@ contract SwapCalldataUsageExample {
 
         // Execute cross-chain swap through DI Gateway
         diGateway.callContractWithToken(
-            destinationChain,
+            destinationChainId,
             destinationAddress, // This is already a string
             swapCalldata,
             "XUSD", // Using XUSD as bridge token
@@ -129,7 +130,7 @@ contract SwapCalldataUsageExample {
             tokenOut,
             amountIn,
             expectedAmountOut,
-            destinationChain,
+            destinationChainId,
             routerType
         );
     }
