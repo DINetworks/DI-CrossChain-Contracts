@@ -1,0 +1,35 @@
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+/flatten_contract
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
+
+# Relayer files
+relayer/config.json
+relayer/meta-tx-config.json
+relayer/processed_events.json
+relayer/failed_transactions.json
+
+# IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+config.json
