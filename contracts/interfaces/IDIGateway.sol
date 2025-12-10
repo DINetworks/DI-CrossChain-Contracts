@@ -20,11 +20,12 @@ interface IDIGateway {
     }
 
     struct TokenInfo {
-        address contractAddress;
+        address token;
         string name;
         string symbol;
         uint8 decimals;
         bool supported;
+        bool isBridged;
     }
 
     event BridgeTransactionLogged(bytes32 indexed txId, BridgeTXInfo txInfo);
@@ -125,26 +126,6 @@ interface IDIGateway {
         Command[] memory commands,
         bytes memory signature
     ) external;
-
-    function validateContractCall(
-        bytes32 commandId,
-        uint32 sourceChainId,
-        address sourceAddress,
-        bytes32 payloadHash
-    ) external view returns (bool);
-
-    function validateContractCallAndMint(
-        bytes32 commandId,
-        uint32 sourceChainId,
-        address sourceAddress,
-        bytes32 payloadHash,
-        string calldata symbol,
-        uint256 amount
-    ) external view returns (bool);
-
-    function getApprovedPayload(
-        bytes32 commandId
-    ) external view returns (bytes memory);
 
     // Admin functions
     function addRelayer(address relayer) external;

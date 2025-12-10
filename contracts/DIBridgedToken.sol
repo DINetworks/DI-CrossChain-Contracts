@@ -12,7 +12,6 @@ contract DIBridgedToken is ERC20, Ownable {
     address public gateway;
     uint32 public originChainId;
     string public originSymbol;
-    bool public constant isBridgedToken = true;
     
     event GatewayUpdated(address indexed oldGateway, address indexed newGateway);
     
