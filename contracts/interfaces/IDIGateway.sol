@@ -20,24 +20,11 @@ interface IDIGateway {
     }
 
     struct TokenInfo {
-        bool supported;
         address contractAddress;
-        string logoURI;
-        address priceFeed;
-        string priceKey;
-        bool useDIAOracle; // true for DIAOracle (CrossFi), false for Chainlink
-    }
-
-    struct TokenData {
         string name;
         string symbol;
         uint8 decimals;
-        address contractAddress;
-        string logoURI;
-        address priceFeed;
-        string priceKey;
-        uint256 price;
-        uint8 priceDecimals;
+        bool supported;
     }
 
     event BridgeTransactionLogged(bytes32 indexed txId, BridgeTXInfo txInfo);
@@ -164,7 +151,7 @@ interface IDIGateway {
 
     function removeRelayer(address relayer) external;
 
-    function addChain(string memory chainName, uint32 chainId) external;
+    function addChain(uint32 chainId) external;
 
     function deployToken(
         string memory name,

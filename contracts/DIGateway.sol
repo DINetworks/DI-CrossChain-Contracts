@@ -17,7 +17,7 @@ import "./DIBridgedToken.sol";
  * @title DIGateway
  * @dev Updated gateway for omnichain bridging with CrossFi as hub
  */
-contract DIGateway is IDIGateway, Ownable {
+abstract contract DIGateway is IDIGateway, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
     using SignatureChecker for address;
@@ -26,11 +26,7 @@ contract DIGateway is IDIGateway, Ownable {
     // Command types
     uint256 public constant COMMAND_APPROVE_CONTRACT_CALL = 0;
     uint256 public constant COMMAND_APPROVE_CONTRACT_CALL_WITH_MINT = 1;
-    uint256 public constant COMMAND_BURN_TOKEN = 2;
-    uint256 public constant COMMAND_MINT_TOKEN = 4;
-    uint256 public constant COMMAND_LOCK_TOKEN = 5;
-    uint256 public constant COMMAND_UNLOCK_TOKEN = 6;
-    uint256 public constant COMMAND_SEND_NATIVE = 7;
+    uint256 public constant COMMAND_SEND_TOKEN = 2;
 
     // Message types for CrossChainMessage event
     uint8 public constant MESSAGE_TYPE_CONTRACT_CALL = 0;
@@ -104,7 +100,7 @@ contract DIGateway is IDIGateway, Ownable {
 
     modifier validContract(address addr) {
         require(
-            addr != address(0) || addr.code.length != 0,
+            addr != address(0) && addr.code.length != 0,
             "Invalid contract"
         );
         _;
@@ -193,7 +189,6 @@ contract DIGateway is IDIGateway, Ownable {
     }
 
     function addChain(
-        string memory chainName,
         uint32 chainId
     ) external onlyOwner {
         require(!supportedChains[chainId], "Already added");
@@ -236,38 +231,21 @@ contract DIGateway is IDIGateway, Ownable {
     function addToken(
         string memory symbol,
         address contractAddress,
-        string memory logoURI,
-        address priceFeed,
-        string memory priceKey,
-        bool useDIAOracle
+        string memory name,
+        uint8 decimals
     ) external onlyOwner {
-        _addToken(
-            symbol,
-            contractAddress,
-            logoURI,
-            priceFeed,
-            priceKey,
-            useDIAOracle
-        );
+        require(!supportedTokens[symbol].supported, "Token already supported");
+        supportedTokens[symbol] = TokenInfo({
+            name: name,
+            symbol: symbol,
+            decimals: decimals,
+            contractAddress: contractAddress,
+            supported: true
+        });
+        tokenList.push(symbol);
+        emit TokenAdded(symbol);
     }
 
-    function addTokenWithMetadata(
-        string memory symbol,
-        address contractAddress,
-        string memory logoURI,
-        address priceFeed,
-        string memory priceKey,
-        bool useDIAOracle
-    ) external onlyOwner {
-        _addToken(
-            symbol,
-            contractAddress,
-            logoURI,
-            priceFeed,
-            priceKey,
-            useDIAOracle
-        );
-    }
 
     function removeToken(
         string memory symbol
@@ -285,27 +263,6 @@ contract DIGateway is IDIGateway, Ownable {
         }
 
         emit TokenRemoved(symbol);
-    }
-
-    function _addToken(
-        string memory symbol,
-        address contractAddress,
-        string memory logoURI,
-        address priceFeed,
-        string memory priceKey,
-        bool useDIAOracle
-    ) internal {
-        require(!supportedTokens[symbol].supported, "Token already supported");
-        supportedTokens[symbol] = TokenInfo({
-            supported: true,
-            contractAddress: contractAddress,
-            logoURI: logoURI,
-            priceFeed: priceFeed,
-            priceKey: priceKey,
-            useDIAOracle: useDIAOracle
-        });
-        tokenList.push(symbol);
-        emit TokenAdded(symbol);
     }
 
     // View functions
@@ -326,63 +283,13 @@ contract DIGateway is IDIGateway, Ownable {
     function getSupportedTokens()
         external
         view
-        returns (TokenData[] memory tokens)
+        returns (TokenInfo[] memory tokens)
     {
-        tokens = new TokenData[](tokenList.length);
+        tokens = new TokenInfo[](tokenList.length);
 
         for (uint256 i = 0; i < tokenList.length; i++) {
             string memory symbol = tokenList[i];
-            TokenInfo memory info = supportedTokens[symbol];
-            address tokenAddr = info.contractAddress;
-
-            string memory name;
-            uint8 decimals;
-            uint256 price;
-            uint8 priceDecimals;
-
-            if (tokenAddr == address(0)) {
-                name = "Native Token";
-                decimals = 18;
-            } else {
-                try IERC20Metadata(tokenAddr).name() returns (
-                    string memory _name
-                ) {
-                    name = _name;
-                } catch {
-                    name = symbol;
-                }
-
-                try IERC20Metadata(tokenAddr).decimals() returns (
-                    uint8 _decimals
-                ) {
-                    decimals = _decimals;
-                } catch {
-                    decimals = 18;
-                }
-            }
-
-            try this.getTokenPrice(symbol) returns (
-                uint256 _price,
-                uint8 _priceDecimals
-            ) {
-                price = _price;
-                priceDecimals = _priceDecimals;
-            } catch {
-                price = 0;
-                priceDecimals = 0;
-            }
-
-            tokens[i] = TokenData({
-                name: name,
-                symbol: symbol,
-                decimals: decimals,
-                contractAddress: tokenAddr,
-                logoURI: info.logoURI,
-                priceFeed: info.priceFeed,
-                priceKey: info.priceKey,
-                price: price,
-                priceDecimals: priceDecimals
-            });
+            tokens[i] = supportedTokens[symbol];
         }
 
         return tokens;
@@ -432,18 +339,32 @@ contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     )
         external
-        payable // TODO: why bridge token logic is different than SendToken
+        payable
         supportedChain(destinationChainId)
         supportedToken(symbol)
         nonZeroAmount(amount)
         validContract(destinationContractAddress)
     {
-        // Get token address from factory
-        address token = tokenFactory.getToken(uint32(block.chainid), symbol);
-        require(token != address(0), "Token not found");
-
-        // Burn tokens from sender
-        DIBridgedToken(token).burn(msg.sender, amount);
+        address token = supportedTokens[symbol].contractAddress;
+        
+        if (token == address(0)) {
+            // Native token - receive native token
+            require(msg.value == amount, "Incorrect native token amount");
+        } else {
+            // Check if it's a bridged token
+            try DIBridgedToken(token).isBridgedToken() returns (bool isBridged) {
+                if (isBridged) {
+                    // Bridged token - burn
+                    DIBridgedToken(token).burn(msg.sender, amount);
+                } else {
+                    // Regular token - lock
+                    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+                }
+            } catch {
+                // Regular token - lock
+                IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            }
+        }
 
         bytes32 payloadHash = keccak256(payload);
 
@@ -478,28 +399,21 @@ contract DIGateway is IDIGateway, Ownable {
             require(msg.value == amount, "Incorrect native token amount");
         } else {
             // Check if it's a bridged token
+            bool isBridged;
             try DIBridgedToken(token).isBridgedToken() returns (
-                bool isBridged
+                bool _isBridged
             ) {
-                if (isBridged) {
-                    // Bridged token - burn
-                    DIBridgedToken(token).burn(msg.sender, amount);
-                } else {
-                    // Regular token - lock
-                    IERC20(token).safeTransferFrom(
-                        msg.sender,
-                        address(this),
-                        amount
-                    );
-                }
+                isBridged = _isBridged;
             } catch {
-                // Regular token - lock
-                IERC20(token).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    amount
-                );
+                isBridged = false;
             }
+
+            if (isBridged) {
+                DIBridgedToken(token).burn(msg.sender, amount);
+            } else {
+                IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            }
+            
         }
 
         emit CrossChainMessage(
@@ -545,16 +459,8 @@ contract DIGateway is IDIGateway, Ownable {
             command.commandType == COMMAND_APPROVE_CONTRACT_CALL_WITH_MINT
         ) {
             _approveContractCallWithMint(commandId, command.data);
-        } else if (command.commandType == COMMAND_MINT_TOKEN) {
-            _mintToken(command.data);
-        } else if (command.commandType == COMMAND_BURN_TOKEN) {
-            _burnToken(command.data);
-        } else if (command.commandType == COMMAND_LOCK_TOKEN) {
-            _lockToken(command.data);
-        } else if (command.commandType == COMMAND_UNLOCK_TOKEN) {
-            _unlockToken(command.data);
-        } else if (command.commandType == COMMAND_SEND_NATIVE) {
-            _sendNative(command.data);
+        } else if (command.commandType == COMMAND_SEND_TOKEN) {
+            _sendToken(command.data);
         } else {
             revert("Unknown command type");
         }
@@ -646,6 +552,38 @@ contract DIGateway is IDIGateway, Ownable {
         }
     }
 
+    function _handleTokenSent(address target, string memory symbol, uint256 amount, uint256 feeAmount) internal {
+        address token = supportedTokens[symbol].contractAddress;
+        uint256 amountAfterFee = amount - feeAmount;
+        
+        if (token == address(0)) {
+            _sendNative(target, amountAfterFee);
+            if (feeAmount > 0) {
+                _sendNative(feeReceiver, feeAmount);
+            }
+        } else {
+            // Check if it's a bridged token
+            try DIBridgedToken(token).isBridgedToken() returns (bool isBridged) {
+                if (isBridged) {                    
+                    _mintToken(token, target, amountAfterFee);
+                    if (feeAmount > 0) {
+                        _mintToken(token, feeReceiver, feeAmount);
+                    }
+                } else {
+                    _unlockToken(token, target, amountAfterFee);
+                    if (feeAmount > 0) {
+                        _unlockToken(token, feeReceiver, feeAmount);
+                    }
+                }
+            } catch {
+                _unlockToken(token, target, amountAfterFee);
+                if (feeAmount > 0) {
+                    _unlockToken(token, feeReceiver, feeAmount);
+                }
+            }
+        }
+    }
+
     function _approveContractCallWithMint(
         bytes32 commandId,
         bytes memory data
@@ -657,6 +595,7 @@ contract DIGateway is IDIGateway, Ownable {
             bytes32 payloadHash,
             string memory symbol,
             uint256 amount,
+            uint256 feeAmount,
             bytes32 sourceTxHash,
             uint256 sourceEventIndex,
             bytes memory payload
@@ -669,6 +608,7 @@ contract DIGateway is IDIGateway, Ownable {
                     bytes32,
                     string,
                     uint256,
+                    uint256,
                     bytes32,
                     uint256,
                     bytes
@@ -676,20 +616,9 @@ contract DIGateway is IDIGateway, Ownable {
             );
 
         require(keccak256(payload) == payloadHash, "Invalid payload hash");
-
         approvedPayloads[commandId] = payload;
 
-        // Mint tokens to contract
-        address token = tokenFactory.getToken(uint32(block.chainid), symbol);
-        require(token != address(0), "Token not found");
-        uint256 bridgeTransactionsFee = (amount * feeInBps) / 10_000;
-
-        DIBridgedToken(token).mint(
-            contractAddress,
-            amount - bridgeTransactionsFee
-        );
-        DIBridgedToken(token).mint(feeReceiver, bridgeTransactionsFee);
-        // DIBridgedToken(token).mint(contractAddress, amount);
+        _handleTokenSent(contractAddress, symbol, amount, feeAmount);
 
         emit ContractCallApprovedWithMint(
             commandId,
@@ -719,114 +648,40 @@ contract DIGateway is IDIGateway, Ownable {
         }
     }
 
-    function getTokenPrice(
-        string memory symbol
-    ) public view returns (uint256 price, uint8 decimals) {
-        TokenInfo memory info = supportedTokens[symbol];
-
-        if (info.priceFeed == address(0)) {
-            return (0, 0);
-        }
-
-        if (info.useDIAOracle) {
-            // Use DIAOracle for CrossFi
-            (uint128 priceValue, uint128 timestamp) = IDIAOracle(info.priceFeed)
-                .getValue(info.priceKey);
-            require(timestamp > 0, "Invalid price timestamp");
-            return (uint256(priceValue), 8); // DIA returns 8 decimals
-        } else {
-            // Use Chainlink AggregatorV3Interface
-            (, int256 answer, , uint256 updatedAt, ) = AggregatorV3Interface(
-                info.priceFeed
-            ).latestRoundData();
-            require(answer > 0, "Invalid price");
-            require(updatedAt > 0, "Invalid timestamp");
-            uint8 priceFeedDecimals = AggregatorV3Interface(info.priceFeed)
-                .decimals();
-            return (uint256(answer), priceFeedDecimals);
-        }
-    }
-
-    function estimateBridgeFee(
-        string memory symbol,
-        uint256 amount
-    ) public view returns (uint256 fee, uint256 feeInUsd) {
-        fee = (amount * feeInBps) / 10_000;
-
-        TokenInfo memory info = supportedTokens[symbol];
-        address token = info.contractAddress;
-
-        if (token != address(0) && info.priceFeed != address(0)) {
-            uint8 tokenDecimals = IERC20Metadata(token).decimals();
-            (uint256 price, uint8 priceDecimals) = getTokenPrice(symbol);
-
-            // Calculate fee in USD: (fee * price) / (10^tokenDecimals) * (10^6) / (10^priceDecimals)
-            // Result in 6 decimals USD
-            feeInUsd =
-                (fee * price * 1e6) /
-                (10 ** tokenDecimals) /
-                (10 ** priceDecimals);
-        } else {
-            feeInUsd = 0;
-        }
-
-        return (fee, feeInUsd);
-    }
-
-    function _mintToken(bytes memory data) internal {
-        (address to, uint256 amount, string memory symbol) = abi.decode(
+    function _sendToken(bytes memory data) internal {   
+        (address to, uint256 amount, uint256 feeAmount, string memory symbol) = abi.decode(
             data,
-            (address, uint256, string)
+            (address, uint256, uint256, string)
         );
 
-        require(amount > 0, "Amount must be greater than zero");
-        require(to != address(0), "Invalid recipient");
+        _handleTokenSent(to, symbol, amount, feeAmount);
+    }
 
-        address token = tokenFactory.getToken(uint32(block.chainid), symbol);
-        require(token != address(0), "Token not found");
+    function _mintToken(address token, address to, uint256 amount) internal {
+        _validateMint(to, amount);
 
         DIBridgedToken(token).mint(to, amount);
     }
 
-    function _burnToken(bytes memory data) internal {
-        (address from, uint256 amount, string memory symbol) = abi.decode(
-            data,
-            (address, uint256, string)
-        );
-
+    function _burnToken(address token, address from, uint256 amount) internal {
         _validateBurn(from, amount);
-
-        address token = tokenFactory.getToken(uint32(block.chainid), symbol);
-        require(token != address(0), "Token not found");
 
         DIBridgedToken(token).burn(from, amount);
     }
 
-    function _lockToken(bytes memory data) internal {
-        (address from, uint256 amount, address token) = abi.decode(
-            data,
-            (address, uint256, address)
-        );
-
+    function _lockToken(address token, address from, uint256 amount) internal {
         _validateLock(from, amount, token);
 
         IERC20(token).safeTransferFrom(from, address(this), amount);
     }
 
-    function _unlockToken(bytes memory data) internal {
-        (address to, uint256 amount, address token) = abi.decode(
-            data,
-            (address, uint256, address)
-        );
-
+    function _unlockToken(address token, address to, uint256 amount) internal {
         _validateUnlock(to, amount, token);
 
         IERC20(token).safeTransfer(to, amount);
     }
 
-    function _sendNative(bytes memory data) internal {
-        (address to, uint256 amount) = abi.decode(data, (address, uint256));
-
+    function _sendNative(address to, uint256 amount) internal {
         _validateSendNative(to, amount);
 
         (bool success, ) = payable(to).call{value: amount}("");
