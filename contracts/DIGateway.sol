@@ -195,7 +195,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
         bytes memory payload
     )
         external
-        payable
         supportedChain(destinationChainId)
         validContract(destinationContractAddress)
     {
@@ -270,7 +269,7 @@ abstract contract DIGateway is IDIGateway, Ownable {
     }
 
     function _handleBurnAndLockToken(
-        string calldata symbol,
+        string memory symbol,
         uint256 amount
     ) internal {
         address token = supportedTokens[symbol].token;
@@ -278,9 +277,9 @@ abstract contract DIGateway is IDIGateway, Ownable {
             require(msg.value == amount, "Incorrect native token amount");
         } else {
             if (supportedTokens[symbol].isBridged) {
-                _burnToken(msg.sender, amount);
+                _burnToken(token, msg.sender, amount);
             } else {
-                _lockToken(msg.sender, amount);
+                _lockToken(token, msg.sender, amount);
             }
         }
     }
@@ -446,7 +445,7 @@ abstract contract DIGateway is IDIGateway, Ownable {
     )
         internal
         noZeroAddress(target)
-        noZeroAmount(amount)
+        nonZeroAmount(amount)
         supportedToken(symbol)
     {
         address token = supportedTokens[symbol].token;
@@ -609,36 +608,35 @@ abstract contract DIGateway is IDIGateway, Ownable {
             originSymbol
         );
 
-        supportedTokens[symbol] = TokenInfo({
-            supported: true,
-            token: address(token),
-            decimals: decimals,
-            isBridged: true,
-            originChainId: originChainId,
-            originSymbol: originSymbol
-        });
+        emit TokenDeployed(symbol, address(token), originChainId, originSymbol);
+        
+        addToken(
+            symbol,
+            address(token),
+            name,
+            decimals,
+            true
+        );
 
         tokenList.push(symbol);
-
-        emit TokenDeployed(symbol, address(token), originChainId, originSymbol);
     }
-
+    
     function addToken(
         string memory symbol,
         address contractAddress,
         string memory name,
         uint8 decimals,
         bool isBridged
-    ) external onlyOwner {
+    ) public onlyOwner {
         require(!supportedTokens[symbol].supported, "Token already supported");
-        supportedTokens[symbol] = TokenInfo({
-            name: name,
-            symbol: symbol,
-            decimals: decimals,
-            contractAddress: contractAddress,
-            supported: true,
-            isBridged: isBridged
-        });
+        supportedTokens[symbol] = TokenInfo(
+            contractAddress,
+            name,
+            symbol,
+            decimals,
+            true,
+            isBridged
+        );
         tokenList.push(symbol);
         emit TokenAdded(symbol);
     }

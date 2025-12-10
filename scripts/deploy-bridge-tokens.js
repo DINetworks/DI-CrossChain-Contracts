@@ -60,16 +60,6 @@ async function main() {
         // Get deployed token address
         tokenAddress = await factory.getToken(token.originChainId, token.originSymbol);
 
-        const addTx = await gateway.addToken(
-          token.symbol,
-          tokenAddress,
-          token.logoURI || "",
-          token.priceFeed || ethers.ZeroAddress,
-          token.priceKey || "",
-          token.useDIAOracle || false
-        );
-        await addTx.wait();
-
         console.log(`Deployed ${token.name} (${token.symbol}): ${tokenAddress}`);
       }
     } catch (error) {

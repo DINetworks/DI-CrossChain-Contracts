@@ -88,6 +88,7 @@ interface IDIGateway {
         bytes32 sourceTxHash,
         uint256 sourceEventIndex
     );
+    event TokenDeployed(string, address, uint32, string);
     event TokenAdded(string indexed symbol);
     event TokenRemoved(string indexed symbol);
     event BridgeFeeUpdated(uint256 feeInBps);
