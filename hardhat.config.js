@@ -30,7 +30,7 @@ module.exports = {
       url: process.env.CROSSFI_RPC_TESTNET_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
-    crossfi: {
+    crossfiMainnet: {
       chainId: 4158,
       url: process.env.CROSSFI_RPC_URL,
       accounts: [process.env.PRIVATE_KEY],
@@ -77,6 +77,7 @@ module.exports = {
       confirmations: 3
     },
     bsc: {
+      chainId: 56,
       url: process.env.BSC_RPC_URL || "",
       accounts: [process.env.PRIVATE_KEY],
       timeout: 120000, // 2 minutes

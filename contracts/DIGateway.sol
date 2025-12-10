@@ -17,7 +17,7 @@ import "./DIBridgedToken.sol";
  * @title DIGateway
  * @dev Updated gateway for omnichain bridging with CrossFi as hub
  */
-abstract contract DIGateway is IDIGateway, Ownable {
+contract DIGateway is IDIGateway, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
     using SignatureChecker for address;
@@ -154,13 +154,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
         noZeroToken(token)
     {}
 
-    function _validateSendNative(
-        address to,
-        uint256 amount
-    ) internal view nonZeroAmount(amount) noZeroAddress(to) {
-        require(address(this).balance >= amount, "Insufficient balance");
-    }
-
     function logBridgeTransaction(
         bytes32 txId,
         uint32 sourceChainId,
@@ -220,7 +213,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     )
         external
-        payable
         supportedChain(destinationChainId)
         supportedToken(symbol)
         nonZeroAmount(amount)
@@ -248,7 +240,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     )
         external
-        payable
         supportedChain(destinationChainId)
         noZeroAddress(destinationAddress)
         supportedToken(symbol)
@@ -273,15 +264,13 @@ abstract contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     ) internal {
         address token = supportedTokens[symbol].token;
-        if (token == address(0)) {
-            require(msg.value == amount, "Incorrect native token amount");
+        
+        if (supportedTokens[symbol].isBridged) {
+            _burnToken(token, msg.sender, amount);
         } else {
-            if (supportedTokens[symbol].isBridged) {
-                _burnToken(token, msg.sender, amount);
-            } else {
-                _lockToken(token, msg.sender, amount);
-            }
+            _lockToken(token, msg.sender, amount);
         }
+        
     }
 
     // GMP Command Execution Functions (for relayers)
@@ -450,25 +439,19 @@ abstract contract DIGateway is IDIGateway, Ownable {
     {
         address token = supportedTokens[symbol].token;
 
-        if (token == address(0)) {
-            _sendNative(target, amount);
+        bool isBridged = supportedTokens[symbol].isBridged;
+        if (isBridged) {
+            _mintToken(token, target, amount);
             if (feeAmount > 0) {
-                _sendNative(feeReceiver, feeAmount);
+                _mintToken(token, feeReceiver, feeAmount);
             }
         } else {
-            bool isBridged = supportedTokens[symbol].isBridged;
-            if (isBridged) {
-                _mintToken(token, target, amount);
-                if (feeAmount > 0) {
-                    _mintToken(token, feeReceiver, feeAmount);
-                }
-            } else {
-                _unlockToken(token, target, amount);
-                if (feeAmount > 0) {
-                    _unlockToken(token, feeReceiver, feeAmount);
-                }
+            _unlockToken(token, target, amount);
+            if (feeAmount > 0) {
+                _unlockToken(token, feeReceiver, feeAmount);
             }
         }
+    
     }
 
     function _safeExecuteCall(
@@ -543,13 +526,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
         IERC20(token).safeTransfer(to, amount);
     }
 
-    function _sendNative(address to, uint256 amount) internal {
-        _validateSendNative(to, amount);
-
-        (bool success, ) = payable(to).call{value: amount}("");
-        require(success, "Native token transfer failed");
-    }
-
     // Utility functions
     function recoverSigner(
         bytes32 _hash,
@@ -600,6 +576,7 @@ abstract contract DIGateway is IDIGateway, Ownable {
     ) external onlyOwner returns (address token) {
         // TODO: check if deploy logic is reasonable???
         require(supportedTokens[symbol].token == address(0), "Token exists");
+        
         token = bridgeTokenRegistry.deploy(
             name,
             symbol,
@@ -617,8 +594,6 @@ abstract contract DIGateway is IDIGateway, Ownable {
             decimals,
             true
         );
-
-        tokenList.push(symbol);
     }
     
     function addToken(

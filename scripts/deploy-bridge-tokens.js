@@ -5,8 +5,8 @@ const tokenConfig = require('../token-config');
 dotenv.config()
 
 // Update these addresses after running deploy-bridge.js
-const GATEWAY_ADDRESS = "0x91b30bB5c8476f899E10B8C54F5d96bbaC978028"; // Replace with actual DIGateway address
-const FACTORY_ADDRESS = "0x8134d8e374B9C51B538Eb63A0b868D1880426a82"; // Replace with actual TokenFactory address
+const GATEWAY_ADDRESS = "0xE9f68Fa7FFef49e2Be71C1F011C45eD4e85b88F8"; // Replace with actual DIGateway address
+const FACTORY_ADDRESS = "0xA4D001ddf3791b91cB433edAe0fbaC61af4BcC6A"; // Replace with actual TokenFactory address
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -38,10 +38,9 @@ async function main() {
         const addTx = await gateway.addToken(
           token.symbol,
           tokenAddress,
-          token.logoURI || "",
-          token.priceFeed || ethers.ZeroAddress,
-          token.priceKey || "",
-          token.useDIAOracle || false
+          token.name,
+          token.decimals,
+          true
         );
         await addTx.wait();
       } else {
@@ -52,13 +51,13 @@ async function main() {
           token.name,
           token.symbol,
           token.decimals,
-          token.originChainId,
+          hre.network.config.chainId,
           token.originSymbol
         );
         await deployTx.wait();
         
         // Get deployed token address
-        tokenAddress = await factory.getToken(token.originChainId, token.originSymbol);
+        tokenAddress = await factory.getToken(hre.network.config.chainId, token.originSymbol);
 
         console.log(`Deployed ${token.name} (${token.symbol}): ${tokenAddress}`);
       }

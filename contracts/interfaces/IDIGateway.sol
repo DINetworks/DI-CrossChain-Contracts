@@ -113,14 +113,14 @@ interface IDIGateway {
         bytes memory payload,
         string memory symbol,
         uint256 amount
-    ) external payable;
+    ) external;
 
     function sendToken(
         uint32 destinationChainId,
         address destinationAddress,
         string memory symbol,
         uint256 amount
-    ) external payable;
+    ) external;
 
     function execute(
         bytes32 commandId,
