@@ -5,8 +5,25 @@ const tokenConfig = require('../token-config');
 dotenv.config()
 
 // Update these addresses after running deploy-bridge.js
-const GATEWAY_ADDRESS = "0xE9f68Fa7FFef49e2Be71C1F011C45eD4e85b88F8"; // Replace with actual DIGateway address
-const FACTORY_ADDRESS = "0xA4D001ddf3791b91cB433edAe0fbaC61af4BcC6A"; // Replace with actual TokenFactory address
+const GATEWAY_ADDRESS = "0x19aC2B530F55E25c8e8E142B1Dfc1a81E7DE36a1"; // Replace with actual DIGateway address
+const FACTORY_ADDRESS = "0xB75b34766f2D0c3C471FA614fe104A12A3873E37"; // Replace with actual TokenFactory address
+
+tokens = [
+  {
+    name: "XUSD",
+    symbol: "XUSD",
+    decimals: 18,
+    originSymbol: "XUSD",
+    address: "0x8BD5Fe9286B039cc38d9B63865a8E87736382CCF"
+  },
+  {
+    name: "WXFI",
+    symbol: "WXFI",
+    decimals: 18,
+    originSymbol: "XFI",
+    address: "0xC537D12bd626B135B251cCa43283EFF69eC109c4"
+  }
+];
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -15,7 +32,6 @@ async function main() {
   console.log("Deployer:", deployer.address);
   console.log("Network:", networkName);
 
-  const tokens = tokenConfig[networkName];
   if (!tokens) {
     console.error(`No token configuration found for network: ${networkName}`);
     process.exit(1);
@@ -29,11 +45,18 @@ async function main() {
   for (const token of tokens) {
     try {
       let tokenAddress;
-      
       if (token.address) {
-        // Token already exists, just add to gateway
+        // Remove Token already deployed, retry to add to gateway
         tokenAddress = token.address;
-        console.log(`Adding existing token ${token.name} (${token.symbol}): ${tokenAddress}`);
+
+        console.log(`Removing existing token ${token.name} (${token.symbol}): ${tokenAddress} from DIGateway`);
+
+        const removeTx = await gateway.removeToken(
+          token.symbol
+        );
+        await removeTx.wait();
+
+        console.log(`Adding existing token ${token.name} (${token.symbol}): ${tokenAddress} to DIGateway`);
         
         const addTx = await gateway.addToken(
           token.symbol,
@@ -43,23 +66,6 @@ async function main() {
           false
         );
         await addTx.wait();
-      } else {
-        // Deploy new token
-        console.log(`Deploying new token ${token.name} (${token.symbol})...`);
-        
-        const deployTx = await gateway.deployToken(
-          token.name,
-          token.symbol,
-          token.decimals,
-          hre.network.config.chainId,
-          token.originSymbol
-        );
-        await deployTx.wait();
-        
-        // Get deployed token address
-        tokenAddress = await factory.getToken(hre.network.config.chainId, token.originSymbol);
-
-        console.log(`Deployed ${token.name} (${token.symbol}): ${tokenAddress}`);
       }
     } catch (error) {
       console.error(`Failed to process ${token.name}:`, error.message);
