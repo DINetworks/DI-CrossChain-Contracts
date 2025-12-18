@@ -2,8 +2,10 @@
   // Chain ID constants
 const CHAIN_IDS = {
   HYPEREVM: 999,
+  HYPEREVM_TESTNET: 998,
   CROSSFI_MAINNET: 4158,
   CROSSFI_TESTNET: 4157,
+  SEPOLIA: 11155111,
   BSC: 56,
   POLYGON: 137,
   ARBITRUM: 42161,
@@ -20,17 +22,17 @@ module.exports = {
   ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
   // Supported networks configuration
   NETWORKS: {
-    hyperevm: {
-      chainId: CHAIN_IDS.HYPEREVM,
-      name: 'HyperEVM',
-      rpcKey: 'https://rpc.hyperliquid.xyz/evm',
+    hyperevmTestnet: {
+      chainId: CHAIN_IDS.HYPEREVM_TESTNET,
+      name: 'HyperEVM Testnet',
+      rpcKey: 'https://rpc.hyperliquid-testnet.xyz/evm',
       enabled: true,
       isBridgeHub: true
     },
-    crossfiMainnet: {
-      chainId: CHAIN_IDS.CROSSFI_MAINNET,
-      name: 'CrossFi Mainnet',
-      rpcKey: 'https://rpc.mainnet.ms/',
+    sepolia: {
+      chainId: CHAIN_IDS.SEPOLIA,
+      name: 'Ethereum Sepolia',
+      rpcKey: 'https://ethereum-sepolia-rpc.publicnode.com',
       enabled: true
     },
     crossfiTestnet: {
@@ -39,11 +41,23 @@ module.exports = {
       rpcKey: 'https://rpc.testnet.ms/',
       enabled: true
     },
+    hyperevm: {
+      chainId: CHAIN_IDS.HYPEREVM,
+      name: 'HyperEVM',
+      rpcKey: 'https://rpc.hyperliquid.xyz/evm',
+      enabled: false
+    },
+    crossfiMainnet: {
+      chainId: CHAIN_IDS.CROSSFI_MAINNET,
+      name: 'CrossFi Mainnet',
+      rpcKey: 'https://rpc.mainnet.ms/',
+      enabled: false
+    },
     bsc: {
       chainId: CHAIN_IDS.BSC,
       name: 'BNB Smart Chain',
       rpcKey: 'https://bsc-dataseed.binance.org/',
-      enabled: true
+      enabled: false
     },
     polygon: {
       chainId: CHAIN_IDS.POLYGON,

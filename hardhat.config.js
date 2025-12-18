@@ -32,6 +32,13 @@ module.exports = {
       timeout: 120000, // 2 minutes
       confirmations: 2
     },
+    hyperevmTestnet: {
+      chainId: 998,
+      url: process.env.HYPEREVM_RPC_TESTNET_URL || "",
+      accounts: [process.env.PRIVATE_KEY],
+      timeout: 120000, // 2 minutes
+      confirmations: 2
+    },
     crossfiTestnet: {
       chainId: 4157,
       url: process.env.CROSSFI_RPC_TESTNET_URL,
@@ -49,6 +56,7 @@ module.exports = {
       confirmations: 3
     },
     sepolia: {
+      chainId: 11155111,
       url: process.env.SEPOLIA_RPC_URL || "",
       accounts: [process.env.PRIVATE_KEY],
     },

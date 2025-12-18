@@ -168,12 +168,12 @@ async function main() {
     process.exit(1);
   }
 
+  // Deploy bridge infrastructure on all networks
+  deploymentResults[networkName] = await deployBridgeInfrastructure(networkName);
+  
+  // Additionally deploy BridgeHub only on HyperEVM
   if (config.isBridgeHubNetwork(networkName)) {
-    // Deploy Bridge Hub on bridge hub network
     deploymentResults.bridgeHub = await deployBridgeHub();
-  } else {
-    // Deploy bridge infrastructure on other networks
-    deploymentResults[networkName] = await deployBridgeInfrastructure(networkName);
   }
 
   // Save deployment results
