@@ -82,6 +82,13 @@ module.exports = {
       accounts: [process.env.PRIVATE_KEY],
       timeout: 120000, // 2 minutes
       confirmations: 2
+    },
+    hyperevm: {
+      chainId: 999,
+      url: process.env.HYPEREVM_RPC_URL || "",
+      accounts: [process.env.PRIVATE_KEY],
+      timeout: 120000, // 2 minutes
+      confirmations: 2
     }
   },
   etherscan: {

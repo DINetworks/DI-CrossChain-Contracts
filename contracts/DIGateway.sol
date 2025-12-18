@@ -33,7 +33,7 @@ contract DIGateway is IDIGateway, Ownable {
     uint8 public constant MESSAGE_TYPE_CONTRACT_CALL_WITH_TOKEN = 1;
     uint8 public constant MESSAGE_TYPE_TOKEN_TRANSFER = 2;
 
-    uint32 public constant CROSSFI_CHAIN_ID = 4158; // Test - 4157, Main - 4158;
+    uint32 public constant HYPEREVM_CHAIN_ID = 999; // HyperEVM Bridge Hub
 
     DIBridgedTokenRegistry public bridgeTokenRegistry;
     EnumerableSet.AddressSet private relayers;
@@ -69,7 +69,7 @@ contract DIGateway is IDIGateway, Ownable {
         supportedChains[1] = true;
         supportedChains[56] = true;
         supportedChains[137] = true;
-        supportedChains[CROSSFI_CHAIN_ID] = true;
+        supportedChains[HYPEREVM_CHAIN_ID] = true;
     }
 
     modifier onlyRelayer() {
@@ -77,8 +77,8 @@ contract DIGateway is IDIGateway, Ownable {
         _;
     }
 
-    modifier onlyCrossFi() {
-        require(block.chainid == CROSSFI_CHAIN_ID, "Only CrossFi");
+    modifier onlyHyperEVM() {
+        require(block.chainid == HYPEREVM_CHAIN_ID, "Only HyperEVM");
         _;
     }
 
@@ -164,7 +164,7 @@ contract DIGateway is IDIGateway, Ownable {
         bytes memory payload,
         bytes32 sourceTxHash,
         bytes32 destTxHash
-    ) external onlyRelayer onlyCrossFi {
+    ) external onlyRelayer onlyHyperEVM {
         BridgeTXInfo memory txInfo = BridgeTXInfo({
             sourceChainId: sourceChainId,
             destChainId: destChainId,
