@@ -18,6 +18,8 @@ contract BridgeHub is Ownable {
         string name;
         string rpcUrl;
         address gatewayAddress;
+        address gasCreditVault;
+        address metaTxGateway;
         bool isActive;
         uint256 addedAt;
     }
@@ -43,6 +45,18 @@ contract BridgeHub is Ownable {
         uint8 eventType; // 0: ContractCall, 1: ContractCallWithToken, 2: TokenTransfer
         uint256 timestamp;
         bytes payload;
+    }
+
+    struct ChainTokenInfo {
+        string symbol;
+        string name;
+        uint8 decimals;
+        address contractAddress;
+    }
+
+    struct DetailedChainInfo {
+        ChainInfo chainInfo;
+        ChainTokenInfo[] tokens;
     }
 
     // Storage
@@ -78,17 +92,20 @@ contract BridgeHub is Ownable {
         uint32 chainId,
         string memory name,
         string memory rpcUrl,
-        address gatewayAddress
+        address gatewayAddress,
+        address gasCreditVault,
+        address metaTxGateway
     ) external onlyOwner {
         require(chainId != 0, "Invalid chain ID");
         require(bytes(name).length > 0, "Invalid name");
-        require(gatewayAddress != address(0), "Invalid gateway address");
 
         supportedChains[chainId] = ChainInfo({
             chainId: chainId,
             name: name,
             rpcUrl: rpcUrl,
             gatewayAddress: gatewayAddress,
+            gasCreditVault: gasCreditVault,
+            metaTxGateway: metaTxGateway,
             isActive: true,
             addedAt: block.timestamp
         });
@@ -101,7 +118,9 @@ contract BridgeHub is Ownable {
         uint32 chainId,
         string memory name,
         string memory rpcUrl,
-        address gatewayAddress
+        address gatewayAddress,
+        address gasCreditVault,
+        address metaTxGateway
     ) external onlyOwner {
         require(chainIds.contains(chainId), "Chain not supported");
         
@@ -109,6 +128,8 @@ contract BridgeHub is Ownable {
         chain.name = name;
         chain.rpcUrl = rpcUrl;
         chain.gatewayAddress = gatewayAddress;
+        chain.gasCreditVault = gasCreditVault;
+        chain.metaTxGateway = metaTxGateway;
         
         emit ChainUpdated(chainId, name, gatewayAddress);
     }
@@ -263,5 +284,51 @@ contract BridgeHub is Ownable {
             bytes32 eventId = eventIds.at(totalEvents - 1 - i);
             events[i] = bridgeEvents[eventId];
         }
+    }
+
+    function getDetailedChainsInfo() external view returns (DetailedChainInfo[] memory) {
+        uint256 chainCount = chainIds.length();
+        DetailedChainInfo[] memory detailedChains = new DetailedChainInfo[](chainCount);
+        
+        for (uint256 i = 0; i < chainCount; i++) {
+            uint32 chainId = uint32(chainIds.at(i));
+            ChainInfo memory chainInfo = supportedChains[chainId];
+            
+            // Count tokens for this chain
+            uint256 tokenCount = 0;
+            for (uint256 j = 0; j < tokenSymbols.length; j++) {
+                string memory symbol = tokenSymbols[j];
+                if (tokenRegistry[symbol].isSupported && 
+                    tokenRegistry[symbol].contractAddresses[chainId] != address(0)) {
+                    tokenCount++;
+                }
+            }
+            
+            // Build token array
+            ChainTokenInfo[] memory tokens = new ChainTokenInfo[](tokenCount);
+            uint256 tokenIndex = 0;
+            for (uint256 j = 0; j < tokenSymbols.length; j++) {
+                string memory symbol = tokenSymbols[j];
+                TokenInfo storage token = tokenRegistry[symbol];
+                address contractAddr = token.contractAddresses[chainId];
+                
+                if (token.isSupported && contractAddr != address(0)) {
+                    tokens[tokenIndex] = ChainTokenInfo({
+                        symbol: token.symbol,
+                        name: token.name,
+                        decimals: token.decimals,
+                        contractAddress: contractAddr
+                    });
+                    tokenIndex++;
+                }
+            }
+            
+            detailedChains[i] = DetailedChainInfo({
+                chainInfo: chainInfo,
+                tokens: tokens
+            });
+        }
+        
+        return detailedChains;
     }
 }

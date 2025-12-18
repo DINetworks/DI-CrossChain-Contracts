@@ -24,19 +24,25 @@ async function main() {
       chainId: 999,
       name: "HyperEVM",
       rpcUrl: "https://rpc.hyperliquid.xyz/evm",
-      gatewayAddress: "0x0000000000000000000000000000000000000000" // To be updated after gateway deployment
+      gatewayAddress: "0x0000000000000000000000000000000000000000",
+      gasCreditVault: "0x0000000000000000000000000000000000000000",
+      metaTxGateway: "0x0000000000000000000000000000000000000000"
     },
     {
       chainId: 4157,
       name: "CrossFi Testnet", 
       rpcUrl: "https://rpc.testnet.ms",
-      gatewayAddress: "0x0000000000000000000000000000000000000000" // To be updated
+      gatewayAddress: "0x0000000000000000000000000000000000000000",
+      gasCreditVault: "0x0000000000000000000000000000000000000000",
+      metaTxGateway: "0x0000000000000000000000000000000000000000"
     },
     {
       chainId: 56,
       name: "BSC Mainnet",
       rpcUrl: "https://bsc-dataseed.binance.org/",
-      gatewayAddress: "0x0000000000000000000000000000000000000000" // To be updated
+      gatewayAddress: "0x0000000000000000000000000000000000000000",
+      gasCreditVault: "0x0000000000000000000000000000000000000000",
+      metaTxGateway: "0x0000000000000000000000000000000000000000"
     }
   ];
 
@@ -46,7 +52,9 @@ async function main() {
         chain.chainId,
         chain.name,
         chain.rpcUrl,
-        chain.gatewayAddress
+        chain.gatewayAddress,
+        chain.gasCreditVault,
+        chain.metaTxGateway
       );
       console.log(`✅ Added chain: ${chain.name} (${chain.chainId})`);
     } catch (error) {
