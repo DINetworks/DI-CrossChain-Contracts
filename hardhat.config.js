@@ -25,6 +25,13 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
+    hyperevm: {
+      chainId: 999,
+      url: process.env.HYPEREVM_RPC_URL || "",
+      accounts: [process.env.PRIVATE_KEY],
+      timeout: 120000, // 2 minutes
+      confirmations: 2
+    },
     crossfiTestnet: {
       chainId: 4157,
       url: process.env.CROSSFI_RPC_TESTNET_URL,
@@ -79,13 +86,6 @@ module.exports = {
     bsc: {
       chainId: 56,
       url: process.env.BSC_RPC_URL || "",
-      accounts: [process.env.PRIVATE_KEY],
-      timeout: 120000, // 2 minutes
-      confirmations: 2
-    },
-    hyperevm: {
-      chainId: 999,
-      url: process.env.HYPEREVM_RPC_URL || "",
       accounts: [process.env.PRIVATE_KEY],
       timeout: 120000, // 2 minutes
       confirmations: 2
