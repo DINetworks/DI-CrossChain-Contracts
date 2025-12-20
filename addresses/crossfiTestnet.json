@@ -1,0 +1,7 @@
+{
+  "tokenTemplate": "0x3cc8bcee6a8F3BeA53579Fc5766E535B9761a56e",
+  "tokenRegistry": "0x1243bC46f1079b33b3B3Aa0db2A67c5b70d8aaEe",
+  "diGateway": "0xb70071b37B693f9e1943B1084ccB5241d6Ce8d8E",
+  "metaTxGateway": "0xCEce55697786F7C402cD5b8AccF7343bBC4211D7",
+  "gasCreditVault": "0xa10EC50CD724BF4ac117439216D5F33105F2A53C"
+}

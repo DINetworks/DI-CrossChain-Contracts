@@ -33,19 +33,13 @@ contract DIGateway is IDIGateway, Ownable {
     uint8 public constant MESSAGE_TYPE_CONTRACT_CALL_WITH_TOKEN = 1;
     uint8 public constant MESSAGE_TYPE_TOKEN_TRANSFER = 2;
 
-    uint32 public constant HYPEREVM_CHAIN_ID = 999; // HyperEVM Bridge Hub
-
     DIBridgedTokenRegistry public bridgeTokenRegistry;
     EnumerableSet.AddressSet private relayers;
 
     mapping(address => bool) public whitelisted;
     mapping(bytes32 => bool) public commandExecuted;
     mapping(bytes32 => BridgeTXInfo) public bridgeTransactions;
-
-    mapping(uint32 => bool) public supportedChains;
-    mapping(string => TokenInfo) public supportedTokens;
     mapping(bytes32 => bytes) public approvedPayloads;
-    string[] public tokenList;
 
     // Bridge fee management
     uint256 public feeInBps; // Fee in basis points (1 bps = 0.01%)
@@ -57,28 +51,19 @@ contract DIGateway is IDIGateway, Ownable {
         uint256 feeInBps_,
         address feeReceiver_
     ) Ownable() {
-        bridgeTokenRegistry = DIBridgedTokenRegistry(tokenRegistry_);
+        
         _transferOwnership(owner_);
 
+        bridgeTokenRegistry = DIBridgedTokenRegistry(tokenRegistry_);
         require(feeInBps_ <= 10000, "Fee cannot exceed 100%");
         require(feeReceiver_ != address(0), "Invalid fee receiver");
-
+        
         feeInBps = feeInBps_;
         feeReceiver = feeReceiver_;
-
-        supportedChains[1] = true;
-        supportedChains[56] = true;
-        supportedChains[137] = true;
-        supportedChains[HYPEREVM_CHAIN_ID] = true;
     }
 
     modifier onlyRelayer() {
         require(whitelisted[msg.sender], "Only relayer");
-        _;
-    }
-
-    modifier onlyHyperEVM() {
-        require(block.chainid == HYPEREVM_CHAIN_ID, "Only HyperEVM");
         _;
     }
 
@@ -110,13 +95,8 @@ contract DIGateway is IDIGateway, Ownable {
         _;
     }
 
-    modifier supportedChain(uint32 chainId) {
-        require(supportedChains[chainId], "Unsupported chain");
-        _;
-    }
-
     modifier supportedToken(string memory symbol) {
-        require(supportedTokens[symbol].supported, "Token not supported");
+        require(bridgeTokenRegistry.isTokenSupported(symbol), "Token not supported");
         _;
     }
 
@@ -164,7 +144,7 @@ contract DIGateway is IDIGateway, Ownable {
         bytes memory payload,
         bytes32 sourceTxHash,
         bytes32 destTxHash
-    ) external onlyRelayer onlyHyperEVM {
+    ) external onlyRelayer {
         BridgeTXInfo memory txInfo = BridgeTXInfo({
             sourceChainId: sourceChainId,
             destChainId: destChainId,
@@ -188,7 +168,6 @@ contract DIGateway is IDIGateway, Ownable {
         bytes memory payload
     )
         external
-        supportedChain(destinationChainId)
         validContract(destinationContractAddress)
     {
         bytes32 payloadHash = keccak256(payload);
@@ -213,7 +192,6 @@ contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     )
         external
-        supportedChain(destinationChainId)
         supportedToken(symbol)
         nonZeroAmount(amount)
         validContract(destinationContractAddress)
@@ -240,7 +218,6 @@ contract DIGateway is IDIGateway, Ownable {
         uint256 amount
     )
         external
-        supportedChain(destinationChainId)
         noZeroAddress(destinationAddress)
         supportedToken(symbol)
         nonZeroAmount(amount)
@@ -263,14 +240,12 @@ contract DIGateway is IDIGateway, Ownable {
         string memory symbol,
         uint256 amount
     ) internal {
-        address token = supportedTokens[symbol].token;
-        
-        if (supportedTokens[symbol].isBridged) {
-            _burnToken(token, msg.sender, amount);
+        bool isBridged = bridgeTokenRegistry.isTokenBridged(symbol);
+        if (isBridged) {
+            bridgeTokenRegistry.burnToken(symbol, msg.sender, amount);
         } else {
-            _lockToken(token, msg.sender, amount);
+            bridgeTokenRegistry.lockToken(symbol, msg.sender, amount);
         }
-        
     }
 
     // GMP Command Execution Functions (for relayers)
@@ -437,21 +412,19 @@ contract DIGateway is IDIGateway, Ownable {
         nonZeroAmount(amount)
         supportedToken(symbol)
     {
-        address token = supportedTokens[symbol].token;
+        bool isBridged = bridgeTokenRegistry.isTokenBridged(symbol);
 
-        bool isBridged = supportedTokens[symbol].isBridged;
         if (isBridged) {
-            _mintToken(token, target, amount);
+            bridgeTokenRegistry.mintToken(symbol, target, amount);
             if (feeAmount > 0) {
-                _mintToken(token, feeReceiver, feeAmount);
+                bridgeTokenRegistry.mintToken(symbol, feeReceiver, feeAmount);
             }
         } else {
-            _unlockToken(token, target, amount);
+            bridgeTokenRegistry.unlockToken(symbol, target, amount);
             if (feeAmount > 0) {
-                _unlockToken(token, feeReceiver, feeAmount);
+                bridgeTokenRegistry.unlockToken(symbol, feeReceiver, feeAmount);
             }
         }
-    
     }
 
     function _safeExecuteCall(
@@ -502,30 +475,6 @@ contract DIGateway is IDIGateway, Ownable {
         require(success, "Contract call with token failed");
     }
 
-    function _mintToken(address token, address to, uint256 amount) internal {
-        _validateMint(to, amount);
-
-        DIBridgedToken(token).mint(to, amount);
-    }
-
-    function _burnToken(address token, address from, uint256 amount) internal {
-        _validateBurn(from, amount);
-
-        DIBridgedToken(token).burn(from, amount);
-    }
-
-    function _lockToken(address token, address from, uint256 amount) internal {
-        _validateLock(from, amount, token);
-
-        IERC20(token).safeTransferFrom(from, address(this), amount);
-    }
-
-    function _unlockToken(address token, address to, uint256 amount) internal {
-        _validateUnlock(to, amount, token);
-
-        IERC20(token).safeTransfer(to, amount);
-    }
-
     // Utility functions
     function recoverSigner(
         bytes32 _hash,
@@ -550,11 +499,6 @@ contract DIGateway is IDIGateway, Ownable {
         emit RelayerRemoved(relayer);
     }
 
-    function addChain(uint32 chainId) external onlyOwner {
-        require(!supportedChains[chainId], "Already added");
-        supportedChains[chainId] = true;
-    }
-
     function setBridgeFee(uint256 _feeInBps) external onlyOwner {
         require(_feeInBps <= 10000, "Fee cannot exceed 100%");
         feeInBps = _feeInBps;
@@ -565,72 +509,6 @@ contract DIGateway is IDIGateway, Ownable {
         require(_feeReceiver != address(0), "Invalid fee receiver");
         feeReceiver = _feeReceiver;
         emit FeeReceiverUpdated(_feeReceiver);
-    }
-
-    function deployToken(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
-        uint32 originChainId,
-        string memory originSymbol
-    ) external onlyOwner returns (address token) {
-        // TODO: check if deploy logic is reasonable???
-        require(supportedTokens[symbol].token == address(0), "Token exists");
-        
-        token = bridgeTokenRegistry.deploy(
-            name,
-            symbol,
-            decimals,
-            originChainId,
-            originSymbol
-        );
-
-        emit TokenDeployed(symbol, address(token), originChainId, originSymbol);
-        
-        addToken(
-            symbol,
-            address(token),
-            name,
-            decimals,
-            true
-        );
-    }
-    
-    function addToken(
-        string memory symbol,
-        address contractAddress,
-        string memory name,
-        uint8 decimals,
-        bool isBridged
-    ) public onlyOwner {
-        require(!supportedTokens[symbol].supported, "Token already supported");
-        supportedTokens[symbol] = TokenInfo(
-            contractAddress,
-            name,
-            symbol,
-            decimals,
-            true,
-            isBridged
-        );
-        tokenList.push(symbol);
-        emit TokenAdded(symbol);
-    }
-
-    function removeToken(
-        string memory symbol
-    ) external supportedToken(symbol) onlyOwner {
-        supportedTokens[symbol].supported = false;
-        supportedTokens[symbol].token = address(0);
-
-        for (uint256 i = 0; i < tokenList.length; i++) {
-            if (keccak256(bytes(tokenList[i])) == keccak256(bytes(symbol))) {
-                tokenList[i] = tokenList[tokenList.length - 1];
-                tokenList.pop();
-                break;
-            }
-        }
-
-        emit TokenRemoved(symbol);
     }
 
     // View functions
@@ -652,30 +530,12 @@ contract DIGateway is IDIGateway, Ownable {
         return relayers.values();
     }
 
-    function getSupportedTokens()
-        external
-        view
-        returns (TokenInfo[] memory tokens)
-    {
-        tokens = new TokenInfo[](tokenList.length);
-
-        for (uint256 i = 0; i < tokenList.length; i++) {
-            string memory symbol = tokenList[i];
-            tokens[i] = supportedTokens[symbol];
-        }
-
-        return tokens;
+    function getBridgeTokenRegistry() external view returns (address) {
+        return address(bridgeTokenRegistry);
     }
 
-    function isTokenSupported(
-        string memory symbol
-    ) external view returns (bool) {
-        return supportedTokens[symbol].supported;
-    }
-
-    function getTokenAddress(
-        string memory symbol
-    ) external view returns (address) {
-        return supportedTokens[symbol].token;
+    function setTokenRegistry(address tokenRegistry_) external onlyOwner {
+        require(tokenRegistry_ != address(0), "Invalid registry address");
+        bridgeTokenRegistry = DIBridgedTokenRegistry(tokenRegistry_);
     }
 }

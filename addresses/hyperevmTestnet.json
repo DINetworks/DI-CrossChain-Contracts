@@ -1,0 +1,6 @@
+{
+  "tokenTemplate": "0x2b7cCE7c85BCb0eA639bB3fbfD19a2F74bA80Ab7",
+  "tokenRegistry": "0x3B4D7F2AA1479fcf2685d82aF27570778ECCb39C",
+  "gatewayFactory": "0xA4D001ddf3791b91cB433edAe0fbaC61af4BcC6A",
+  "diGateway": "0x196295D637a97C7fF941eF4Bd112C6ab574A15B9"
+}

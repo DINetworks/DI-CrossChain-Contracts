@@ -19,40 +19,7 @@ interface IDIGateway {
         bytes data;
     }
 
-    struct TokenInfo {
-        address token;
-        string name;
-        string symbol;
-        uint8 decimals;
-        bool supported;
-        bool isBridged;
-    }
-
     event BridgeTransactionLogged(bytes32 indexed txId, BridgeTXInfo txInfo);
-    event TokenLocked(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 destChainId
-    );
-    event TokenMinted(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 sourceChainId
-    );
-    event TokenBurned(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 destChainId
-    );
-    event TokenUnlocked(
-        address indexed token,
-        address indexed user,
-        uint256 amount,
-        uint32 sourceChainId
-    );
     event RelayerAdded(address indexed relayer);
     event RelayerRemoved(address indexed relayer);
 
@@ -88,9 +55,7 @@ interface IDIGateway {
         bytes32 sourceTxHash,
         uint256 sourceEventIndex
     );
-    event TokenDeployed(string, address, uint32, string);
-    event TokenAdded(string indexed symbol);
-    event TokenRemoved(string indexed symbol);
+
     event BridgeFeeUpdated(uint256 feeInBps);
     event FeeReceiverUpdated(address indexed feeReceiver);
 
@@ -132,16 +97,6 @@ interface IDIGateway {
     function addRelayer(address relayer) external;
 
     function removeRelayer(address relayer) external;
-
-    function addChain(uint32 chainId) external;
-
-    function deployToken(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
-        uint32 originChainId,
-        string memory originSymbol
-    ) external returns (address);
 
     function getAllRelayers() external view returns (address[] memory);
 

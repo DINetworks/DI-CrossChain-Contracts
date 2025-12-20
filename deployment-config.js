@@ -45,19 +45,19 @@ module.exports = {
       chainId: CHAIN_IDS.HYPEREVM,
       name: 'HyperEVM',
       rpcKey: 'https://rpc.hyperliquid.xyz/evm',
-      enabled: false
+      enabled: true
     },
     crossfiMainnet: {
       chainId: CHAIN_IDS.CROSSFI_MAINNET,
       name: 'CrossFi Mainnet',
       rpcKey: 'https://rpc.mainnet.ms/',
-      enabled: false
+      enabled: true
     },
     bsc: {
       chainId: CHAIN_IDS.BSC,
       name: 'BNB Smart Chain',
       rpcKey: 'https://bsc-dataseed.binance.org/',
-      enabled: false
+      enabled: true
     },
     polygon: {
       chainId: CHAIN_IDS.POLYGON,
