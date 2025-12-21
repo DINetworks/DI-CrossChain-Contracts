@@ -6,16 +6,26 @@ const { saveContractAddress, getContractAddress, saveTokenData, addTokenToFile }
 
 const { ZERO_ADDRESS } = config;
 
-async function deployTokens(networkName) {
-  console.log(`Deploying tokens on ${networkName}...`);
+async function deployTokens(networkName, force = false, tokenSymbol = null) {
+  console.log(`Deploying tokens on ${networkName}... (force: ${force})`);
   
-  const networkConfig = config.getNetworkConfig(networkName);
-  const tokens = config.getNetworkTokens(networkName);
+  let tokens = config.getNetworkTokens(networkName);
   
   if (!tokens || tokens.length === 0) {
     console.log('No tokens configured for this network');
     return {};
   }
+  
+  // Filter to specific token if requested
+  if (tokenSymbol) {
+    tokens = tokens.filter(token => token.symbol === tokenSymbol);
+    if (tokens.length === 0) {
+      console.log(`❌ Token ${tokenSymbol} not found in configuration`);
+      return {};
+    }
+  }
+  
+  const networkConfig = config.getNetworkConfig(networkName);
   
   const results = {};
   const deployedTokens = [];
@@ -26,33 +36,39 @@ async function deployTokens(networkName) {
   for (const token of tokens) {
     try {
       let tokenAddress;
-      let isBridged;
+      let isDeployed;
       
       if (!token.address) {
         const deployTx = await tokenRegistryContract.deploy(
+          ZERO_ADDRESS,
           token.name,
           token.symbol,
           token.decimals,
           networkConfig.chainId,
-          token.originSymbol
+          token.originSymbol,
+          true,
+          force
         );
         await deployTx.wait();
         
-        tokenAddress = await tokenRegistryContract.getToken(networkConfig.chainId, token.originSymbol);
-        isBridged = true;
+        tokenAddress = await tokenRegistryContract.getTokenAddress(token.symbol);
+        isDeployed = true;
         console.log(`✅ Deployed ${token.symbol}:`, tokenAddress);
       } else {
-        const addTx = await tokenRegistryContract.addToken(
-          token.symbol,
+        const addTx = await tokenRegistryContract.deploy(
           token.address,
           token.name,
+          token.symbol,
           token.decimals,
-          false
+          0,
+          "",
+          false,
+          force
         );
         await addTx.wait();
         
         tokenAddress = token.address;
-        isBridged = false;
+        isDeployed = false;
         console.log(`✅ Added existing ${token.symbol}:`, tokenAddress);
       }
       
@@ -64,7 +80,7 @@ async function deployTokens(networkName) {
         name: token.name,
         decimals: token.decimals,
         address: tokenAddress,
-        isBridged: isBridged,
+        isDeployed: isDeployed,
         originSymbol: token.originSymbol
       };
       addTokenToFile(networkName, tokenInfo);
@@ -80,20 +96,6 @@ async function deployTokens(networkName) {
   }
   
   return results;
-}
-
-async function main() {
-  const networkName = hre.network.name;
-  await deployTokens(networkName);
-}
-
-if (require.main === module) {
-  main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(error);
-      process.exit(1);
-    });
 }
 
 module.exports = { deployTokens };

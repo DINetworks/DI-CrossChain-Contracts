@@ -24,11 +24,21 @@ contract BridgeHub is Ownable {
         uint256 addedAt;
     }
 
+    struct TokenDetail {
+        address tokenAddress;
+        string name;
+        string symbol;
+        uint8 decimals;
+        uint32 originChainId;
+        string originSymbol;
+        bool isDeployed;
+    }
+
     struct TokenInfo {
         string symbol;
         string name;
         uint8 decimals;
-        mapping(uint32 => address) contractAddresses; // chainId => contract address
+        mapping(uint32 => TokenDetail) contractAddresses; // chainId => TokenDetail
         bool isSupported;
         uint256 addedAt;
     }
@@ -47,16 +57,9 @@ contract BridgeHub is Ownable {
         bytes payload;
     }
 
-    struct ChainTokenInfo {
-        string symbol;
-        string name;
-        uint8 decimals;
-        address contractAddress;
-    }
-
     struct DetailedChainInfo {
         ChainInfo chainInfo;
-        ChainTokenInfo[] tokens;
+        TokenDetail[] tokens;
     }
 
     // Storage
@@ -164,13 +167,24 @@ contract BridgeHub is Ownable {
     function addTokenContract(
         string memory symbol,
         uint32 chainId,
-        address contractAddress
+        address contractAddress,
+        uint32 originChainId,
+        string memory originSymbol,
+        bool isDeployed
     ) external onlyOwner {
         require(tokenRegistry[symbol].isSupported, "Token not supported");
         require(chainIds.contains(chainId), "Chain not supported");
         require(contractAddress != address(0), "Invalid contract address");
 
-        tokenRegistry[symbol].contractAddresses[chainId] = contractAddress;
+        tokenRegistry[symbol].contractAddresses[chainId] = TokenDetail({
+            tokenAddress: contractAddress,
+            name: tokenRegistry[symbol].name,
+            symbol: symbol,
+            decimals: tokenRegistry[symbol].decimals,
+            originChainId: originChainId,
+            originSymbol: originSymbol,
+            isDeployed: isDeployed
+        });
         emit TokenContractAdded(symbol, chainId, contractAddress);
     }
 
@@ -249,7 +263,7 @@ contract BridgeHub is Ownable {
 
     function getTokenContract(string memory symbol, uint32 chainId) external view returns (address) {
         require(tokenRegistry[symbol].isSupported, "Token not supported");
-        return tokenRegistry[symbol].contractAddresses[chainId];
+        return tokenRegistry[symbol].contractAddresses[chainId].tokenAddress;
     }
 
     function isChainSupported(uint32 chainId) external view returns (bool) {
@@ -299,26 +313,21 @@ contract BridgeHub is Ownable {
             for (uint256 j = 0; j < tokenSymbols.length; j++) {
                 string memory symbol = tokenSymbols[j];
                 if (tokenRegistry[symbol].isSupported && 
-                    tokenRegistry[symbol].contractAddresses[chainId] != address(0)) {
+                    tokenRegistry[symbol].contractAddresses[chainId].tokenAddress != address(0)) {
                     tokenCount++;
                 }
             }
             
             // Build token array
-            ChainTokenInfo[] memory tokens = new ChainTokenInfo[](tokenCount);
+            TokenDetail[] memory tokens = new TokenDetail[](tokenCount);
             uint256 tokenIndex = 0;
             for (uint256 j = 0; j < tokenSymbols.length; j++) {
                 string memory symbol = tokenSymbols[j];
                 TokenInfo storage token = tokenRegistry[symbol];
-                address contractAddr = token.contractAddresses[chainId];
+                TokenDetail storage tokenDetail = token.contractAddresses[chainId];
                 
-                if (token.isSupported && contractAddr != address(0)) {
-                    tokens[tokenIndex] = ChainTokenInfo({
-                        symbol: token.symbol,
-                        name: token.name,
-                        decimals: token.decimals,
-                        contractAddress: contractAddr
-                    });
+                if (token.isSupported && tokenDetail.tokenAddress != address(0)) {
+                    tokens[tokenIndex] = tokenDetail;
                     tokenIndex++;
                 }
             }

@@ -240,7 +240,7 @@ contract DIGateway is IDIGateway, Ownable {
         string memory symbol,
         uint256 amount
     ) internal {
-        bool isBridged = bridgeTokenRegistry.isTokenBridged(symbol);
+        bool isBridged = bridgeTokenRegistry.isTokenDeployed(symbol);
         if (isBridged) {
             bridgeTokenRegistry.burnToken(symbol, msg.sender, amount);
         } else {
@@ -412,9 +412,9 @@ contract DIGateway is IDIGateway, Ownable {
         nonZeroAmount(amount)
         supportedToken(symbol)
     {
-        bool isBridged = bridgeTokenRegistry.isTokenBridged(symbol);
+        bool isDeployedToken = bridgeTokenRegistry.isTokenDeployed(symbol);
 
-        if (isBridged) {
+        if (isDeployedToken) {
             bridgeTokenRegistry.mintToken(symbol, target, amount);
             if (feeAmount > 0) {
                 bridgeTokenRegistry.mintToken(symbol, feeReceiver, feeAmount);

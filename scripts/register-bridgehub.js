@@ -46,7 +46,14 @@ async function registerTokensWithBridgeHub() {
             try {
                 const chainId = config.getNetworkConfig(networkData.network)?.chainId;
                 if (chainId) {
-                    await bridgeHub.addTokenContract(token.symbol, chainId, token.address);
+                    await bridgeHub.addTokenContract(
+                        token.symbol, 
+                        chainId, 
+                        token.address,
+                        token.originChainId || 0,
+                        token.originSymbol || "",
+                        token.isDeployed || false
+                    );
                     console.log(`✓ Added ${token.symbol} contract for chain ${chainId}: ${token.address}`);
                 }
             } catch (error) {

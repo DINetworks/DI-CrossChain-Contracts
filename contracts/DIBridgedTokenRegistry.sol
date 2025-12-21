@@ -25,18 +25,13 @@ contract DIBridgedTokenRegistry is Ownable {
         uint8 decimals;
         uint32 originChainId;
         string originSymbol;
-        bool exists;
-        bool isBridged;
+        bool isDeployed;
     }
     
-    mapping(bytes32 => TokenInfo) public tokens;
-    mapping(address => bytes32) public tokenToId;
     mapping(string => TokenInfo) public supportedTokens;
-    bytes32[] public tokenIds;
     string[] public tokenList;
     
     event TokenDeployed(
-        bytes32 indexed tokenId,
         address indexed tokenAddress,
         string name,
         string symbol,
@@ -50,7 +45,7 @@ contract DIBridgedTokenRegistry is Ownable {
     }
     
     modifier supportedToken(string memory symbol) {
-        require(supportedTokens[symbol].exists, "Token not supported");
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
         _;
     }
     
@@ -64,84 +59,57 @@ contract DIBridgedTokenRegistry is Ownable {
     }
     
     function deploy(
+        address tokenAddress,
         string memory name,
         string memory symbol,
-        uint8 decimals_,
-        uint32 originChainId,
-        string memory originSymbol
-    ) external onlyOwner returns (address) {
-        bytes32 tokenId = keccak256(abi.encodePacked(originChainId, originSymbol));
-        require(!tokens[tokenId].exists, "Token already exists");
-        
-        address clone = template.clone();
-        DIBridgedToken(clone).initialize(
-            name,
-            symbol,
-            decimals_,
-            originChainId,
-            originSymbol,
-            gateway,
-            owner()
-        );
-        
-        tokens[tokenId] = TokenInfo({
-            tokenAddress: clone,
-            name: name,
-            symbol: symbol,
-            decimals: decimals_,
-            originChainId: originChainId,
-            originSymbol: originSymbol,
-            exists: true,
-            isBridged: true
-        });
-        
-        tokenToId[clone] = tokenId;
-        tokenIds.push(tokenId);
-        
-        // Add to supported tokens
-        supportedTokens[symbol] = TokenInfo({
-            tokenAddress: clone,
-            name: name,
-            symbol: symbol,
-            decimals: decimals_,
-            originChainId: originChainId,
-            originSymbol: originSymbol,
-            exists: true,
-            isBridged: true
-        });
-        tokenList.push(symbol);
-        
-        emit TokenDeployed(tokenId, clone, name, symbol, originChainId, originSymbol);
-        emit TokenAdded(symbol);
-        return clone;
-    }
-    
-    function addToken(
-        string memory symbol,
-        address contractAddress,
-        string memory name,
         uint8 decimals,
-        bool isBridged
-    ) external onlyOwner {
-        require(!supportedTokens[symbol].exists, "Token already supported");
+        uint32 originChainId,
+        string memory originSymbol,
+        bool deployNewToken,
+        bool forceDeploy
+    ) external onlyOwner returns (address) {
+        
+        if (forceDeploy) {
+            removeToken(symbol);
+        }
+        require(supportedTokens[symbol].tokenAddress == address(0), "Token already exists");
+
+        address newTokenAddress = tokenAddress;
+        
+        if (deployNewToken) {
+            newTokenAddress = template.clone();
+            DIBridgedToken(newTokenAddress).initialize(
+                name,
+                symbol,
+                decimals,
+                originChainId,
+                originSymbol,
+                gateway,
+                owner()
+            );
+
+            emit TokenDeployed(newTokenAddress, name, symbol, originChainId, originSymbol);
+        }
+
         supportedTokens[symbol] = TokenInfo({
-            tokenAddress: contractAddress,
+            tokenAddress: newTokenAddress,
             name: name,
             symbol: symbol,
             decimals: decimals,
-            originChainId: 0,
-            originSymbol: "",
-            exists: true,
-            isBridged: isBridged
+            originChainId: originChainId,
+            originSymbol: originSymbol,
+            isDeployed: deployNewToken
         });
         tokenList.push(symbol);
+
         emit TokenAdded(symbol);
+
+        return newTokenAddress;
     }
 
     function removeToken(
         string memory symbol
-    ) external supportedToken(symbol) onlyOwner {
-        supportedTokens[symbol].exists = false;
+    ) internal {
         supportedTokens[symbol].tokenAddress = address(0);
 
         for (uint256 i = 0; i < tokenList.length; i++) {
@@ -157,42 +125,29 @@ contract DIBridgedTokenRegistry is Ownable {
 
     // Token operations for gateway
     function mintToken(string memory symbol, address to, uint256 amount) external onlyGateway {
-        require(supportedTokens[symbol].exists, "Token not supported");
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
         address token = supportedTokens[symbol].tokenAddress;
         DIBridgedToken(token).mint(to, amount);
     }
 
     function burnToken(string memory symbol, address from, uint256 amount) external onlyGateway {
-        require(supportedTokens[symbol].exists, "Token not supported");
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
         address token = supportedTokens[symbol].tokenAddress;
         DIBridgedToken(token).burn(from, amount);
     }
 
     function lockToken(string memory symbol, address from, uint256 amount) external onlyGateway {
-        require(supportedTokens[symbol].exists, "Token not supported");
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
         address token = supportedTokens[symbol].tokenAddress;
         IERC20(token).safeTransferFrom(from, address(this), amount);
     }
 
     function unlockToken(string memory symbol, address to, uint256 amount) external onlyGateway {
-        require(supportedTokens[symbol].exists, "Token not supported");
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
         address token = supportedTokens[symbol].tokenAddress;
         IERC20(token).safeTransfer(to, amount);
     }
     
-    function getToken(uint32 originChainId, string memory originSymbol) external view returns (address) {
-        bytes32 tokenId = keccak256(abi.encodePacked(originChainId, originSymbol));
-        return tokens[tokenId].tokenAddress;
-    }
-    
-    function getTokenInfo(bytes32 tokenId) external view returns (TokenInfo memory) {
-        return tokens[tokenId];
-    }
-    
-    function getAllTokens() external view returns (bytes32[] memory) {
-        return tokenIds;
-    }
-
     function getSupportedTokens() external view returns (TokenInfo[] memory tokenInfos) {
         tokenInfos = new TokenInfo[](tokenList.length);
         for (uint256 i = 0; i < tokenList.length; i++) {
@@ -203,7 +158,7 @@ contract DIBridgedTokenRegistry is Ownable {
     }
 
     function isTokenSupported(string memory symbol) external view returns (bool) {
-        return supportedTokens[symbol].exists;
+        return supportedTokens[symbol].tokenAddress != address(0);
     }
 
     function getTokenAddress(string memory symbol) external view returns (address) {
@@ -214,9 +169,9 @@ contract DIBridgedTokenRegistry is Ownable {
         return supportedTokens[symbol];
     }
 
-    function isTokenBridged(string memory symbol) external view returns (bool) {
-        require(supportedTokens[symbol].exists, "Token not supported");
-        return supportedTokens[symbol].isBridged;
+    function isTokenDeployed(string memory symbol) external view returns (bool) {
+        require(supportedTokens[symbol].tokenAddress != address(0), "Token not supported");
+        return supportedTokens[symbol].isDeployed;
     }
     
     function setGateway(address newGateway) external onlyOwner {

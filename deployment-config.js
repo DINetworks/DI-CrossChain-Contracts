@@ -101,6 +101,10 @@ module.exports = {
         [CHAIN_IDS.HYPEREVM]: {
           address: "0x5555555555555555555555555555555555555555",
           decimals: 18
+        },
+        [CHAIN_IDS.HYPEREVM_TESTNET]: {
+          address: "0x5555555555555555555555555555555555555555",
+          decimals: 18
         }
       }
     },
@@ -172,6 +176,10 @@ module.exports = {
       chains: {
         [CHAIN_IDS.HYPEREVM]: {
           address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          decimals: 6
+        },
+        [CHAIN_IDS.HYPEREVM_TESTNET]: {
+          address: "0x2B3370eE501B4a559b57D449569354196457D8Ab",
           decimals: 6
         },
         [CHAIN_IDS.BSC]: {

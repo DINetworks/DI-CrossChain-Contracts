@@ -4,6 +4,21 @@ require("@nomicfoundation/hardhat-verify");
 require("hardhat-contract-sizer");
 require("@openzeppelin/hardhat-upgrades");
 
+task("deploy-token", "Deploy a specific token")
+  .addParam("token", "Token symbol to deploy")
+  .addFlag("force", "Force deployment")
+  .setAction(async (taskArgs, hre) => {
+    const { deployTokens } = require('./scripts/deploy-tokens');
+    await deployTokens(hre.network.name, taskArgs.force, taskArgs.token);
+  });
+
+task("deploy-tokens", "Deploy tokens")
+  .addFlag("force", "Force deployment")
+  .setAction(async (taskArgs, hre) => {
+    const { deployTokens } = require('./scripts/deploy-tokens');
+    await deployTokens(hre.network.name, taskArgs.force);
+  });
+
 module.exports = {
   solidity: {
     compilers: [
