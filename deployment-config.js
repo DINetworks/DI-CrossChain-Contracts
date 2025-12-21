@@ -93,6 +93,17 @@ module.exports = {
 
   // Token configurations with contract addresses and decimals by chain
   TOKEN_CONTRACTS: {
+    HYPE: {
+      name: "HYPE",
+      symbol: "HYPE",
+      defaultDecimals: 18,
+      chains: {
+        [CHAIN_IDS.HYPEREVM]: {
+          address: "0x5555555555555555555555555555555555555555",
+          decimals: 18
+        }
+      }
+    },
     XUSD: {
       name: "XUSD",
       symbol: "XUSD",
@@ -132,6 +143,10 @@ module.exports = {
           address: "0x55d398326f99059fF775485246999027B3197955",
           decimals: 18
         },
+        [CHAIN_IDS.HYPEREVM]: {
+          address: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+          decimals: 6
+        },
         [CHAIN_IDS.POLYGON]: {
           address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
           decimals: 6
@@ -155,6 +170,10 @@ module.exports = {
       symbol: "USDC",
       defaultDecimals: 6,
       chains: {
+        [CHAIN_IDS.HYPEREVM]: {
+          address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          decimals: 6
+        },
         [CHAIN_IDS.BSC]: {
           address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
           decimals: 18

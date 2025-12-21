@@ -1,7 +1,45 @@
 {
-  "tokenTemplate": "0x3cc8bcee6a8F3BeA53579Fc5766E535B9761a56e",
-  "tokenRegistry": "0x1243bC46f1079b33b3B3Aa0db2A67c5b70d8aaEe",
-  "diGateway": "0xb70071b37B693f9e1943B1084ccB5241d6Ce8d8E",
-  "metaTxGateway": "0xCEce55697786F7C402cD5b8AccF7343bBC4211D7",
-  "gasCreditVault": "0xa10EC50CD724BF4ac117439216D5F33105F2A53C"
+  "tokenTemplate": "0x0855cBe6A0038B2a6e49a4e226D6D64D171A27D9",
+  "tokenRegistry": "0x4188851A8640BEf577D94ed2fDf37CF194F960E0",
+  "diGateway": "0x46F8dE61335694cF3fAa9CADB072c31A6D36FD7D",
+  "metaTxGateway": "0x03E1d215629fcAA914d07B5f3AA838c0495d6b86",
+  "gasCreditVault": "0x316a3AC5C5eB1482C72c1F3716B486558B38c0C6",
+  "tokenData": {
+    "network": "crossfiTestnet",
+    "tokens": [
+      {
+        "symbol": "XUSD",
+        "name": "XUSD",
+        "decimals": 18,
+        "address": "0x7D55FBbdBc11D3EeaC4a33867c5c79517Be3C703",
+        "isBridged": false,
+        "originSymbol": "XUSD"
+      },
+      {
+        "symbol": "WXFI",
+        "name": "Wrapped XFI",
+        "decimals": 18,
+        "address": "0x398D6abeF2D415C9E1545E8CFe94a5da71750fcd",
+        "isBridged": false,
+        "originSymbol": "XFI"
+      },
+      {
+        "symbol": "USDT",
+        "name": "DI Bridged Tether USD",
+        "decimals": 6,
+        "address": "0x96E5622Eef2107014764CFcD3A0D6A0D38cD5CaF",
+        "isBridged": true,
+        "originSymbol": "USDT"
+      },
+      {
+        "symbol": "USDC",
+        "name": "DI Bridged USD Coin",
+        "decimals": 6,
+        "address": "0x5b2BE3CcfFBDC9729A96933901f385bC3BC2C9D6",
+        "isBridged": true,
+        "originSymbol": "USDC"
+      }
+    ],
+    "timestamp": "2025-12-21T04:26:20.557Z"
+  }
 }

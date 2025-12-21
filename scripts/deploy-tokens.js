@@ -1,6 +1,8 @@
 const { ethers } = require("hardhat");
+const hre = require("hardhat");
+const fs = require('fs');
 const config = require('../deployment-config.js');
-const { saveContractAddress, getContractAddress } = require('./utils/address-manager');
+const { saveContractAddress, getContractAddress, saveTokenData, addTokenToFile } = require('./utils/address-manager');
 
 const { ZERO_ADDRESS } = config;
 
@@ -16,42 +18,65 @@ async function deployTokens(networkName) {
   }
   
   const results = {};
+  const deployedTokens = [];
 
   const tokenRegistryContract = await ethers.getContractAt("DIBridgedTokenRegistry", getContractAddress(networkName, 'tokenRegistry'));
   const creditVaultContract = await ethers.getContractAt("GasCreditVault", getContractAddress(networkName, 'gasCreditVault'));
   
   for (const token of tokens) {
-    if (!token.address) {
-      const deployTx = await tokenRegistryContract.deployToken(
-        token.name,
-        token.symbol,
-        token.decimals,
-        networkConfig.chainId,
-        token.originSymbol
-      );
-      await deployTx.wait();
+    try {
+      let tokenAddress;
+      let isBridged;
       
-      const tokenAddress = await tokenRegistryContract.getToken(networkConfig.chainId, token.originSymbol);
+      if (!token.address) {
+        const deployTx = await tokenRegistryContract.deploy(
+          token.name,
+          token.symbol,
+          token.decimals,
+          networkConfig.chainId,
+          token.originSymbol
+        );
+        await deployTx.wait();
+        
+        tokenAddress = await tokenRegistryContract.getToken(networkConfig.chainId, token.originSymbol);
+        isBridged = true;
+        console.log(`✅ Deployed ${token.symbol}:`, tokenAddress);
+      } else {
+        const addTx = await tokenRegistryContract.addToken(
+          token.symbol,
+          token.address,
+          token.name,
+          token.decimals,
+          false
+        );
+        await addTx.wait();
+        
+        tokenAddress = token.address;
+        isBridged = false;
+        console.log(`✅ Added existing ${token.symbol}:`, tokenAddress);
+      }
+      
       results[token.originSymbol] = tokenAddress;
-      saveContractAddress(networkName, `token_${token.originSymbol}`, tokenAddress);
-      console.log(`✅ Deployed ${token.symbol}:`, tokenAddress);
-    } else {
-      const addTx = await tokenRegistryContract.addToken(
-        token.symbol,
-        token.address,
-        token.name,
-        token.decimals,
-        false
-      );
-      await addTx.wait();
+
+      // Add token to file immediately
+      const tokenInfo = {
+        symbol: token.symbol,
+        name: token.name,
+        decimals: token.decimals,
+        address: tokenAddress,
+        isBridged: isBridged,
+        originSymbol: token.originSymbol
+      };
+      addTokenToFile(networkName, tokenInfo);
       
-      results[token.originSymbol] = token.address;
-      saveContractAddress(networkName, `token_${token.originSymbol}`, token.address);
-      console.log(`✅ Added existing ${token.symbol}:`, token.address);
+      // Save token info for BridgeHub registration
+      deployedTokens.push(tokenInfo);
+      
+      await creditVaultContract.whitelistToken(tokenAddress, ZERO_ADDRESS, true);
+      console.log(`✅ Whitelisted ${token.symbol} in credit vault`);
+    } catch (error) {
+      console.error(`❌ Error processing token ${token.symbol}:`, error.message);
     }
-    
-    await creditVaultContract.whitelistToken(results[token.originSymbol], ZERO_ADDRESS, true);
-    console.log(`✅ Whitelisted ${token.symbol} in credit vault`);
   }
   
   return results;

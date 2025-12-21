@@ -1,6 +1,55 @@
 {
-  "tokenTemplate": "0x2b7cCE7c85BCb0eA639bB3fbfD19a2F74bA80Ab7",
-  "tokenRegistry": "0x3B4D7F2AA1479fcf2685d82aF27570778ECCb39C",
+  "tokenTemplate": "0x605EFF68F6744F96d79d2C6815c43d08086255C7",
+  "tokenRegistry": "0xBD60247AD13f19004dEe0D4F9cE8510548f90308",
   "gatewayFactory": "0xA4D001ddf3791b91cB433edAe0fbaC61af4BcC6A",
-  "diGateway": "0x196295D637a97C7fF941eF4Bd112C6ab574A15B9"
+  "diGateway": "0xd166af692030a4579C7436900a117C5F7858E1b3",
+  "metaTxGateway": "0x13dE7Ed6348B9126EcDF7415EA40fD62b4193728",
+  "gasCreditVault": "0x7743F3DA0171b08e9a5e5D6524521ee1Bdf41A88",
+  "tokenData": {
+    "network": "hyperevmTestnet",
+    "tokens": [
+      {
+        "symbol": "XUSD",
+        "name": "DI Bridged XUSD",
+        "decimals": 18,
+        "address": "0x228Ed27e3731Df2BEaAD4c8A0136004620864ce8",
+        "isBridged": true,
+        "originSymbol": "XUSD"
+      },
+      {
+        "symbol": "WXFI",
+        "name": "DI Bridged Wrapped XFI",
+        "decimals": 18,
+        "address": "0x7924Cbbad0934c13B423e5437bA6143D3cB59129",
+        "isBridged": true,
+        "originSymbol": "XFI"
+      },
+      {
+        "symbol": "USDT",
+        "name": "DI Bridged Tether USD",
+        "decimals": 6,
+        "address": "0xba2A491E2700A2Ee6757Aa3ae9A3E5C956182731",
+        "isBridged": true,
+        "originSymbol": "USDT"
+      },
+      {
+        "symbol": "USDC",
+        "name": "DI Bridged USD Coin",
+        "decimals": 6,
+        "address": "0x41D20BB4bd839D708dc37C0C4c2195BA5dF5B76b",
+        "isBridged": true,
+        "originSymbol": "USDC"
+      },
+      {
+        "symbol": "HYPE",
+        "name": "DI Bridged HYPE",
+        "decimals": 18,
+        "address": "0xF9619A490675568e59b01113C87D9acb73cf5241",
+        "isBridged": true,
+        "originSymbol": "HYPE"
+      }
+    ],
+    "timestamp": "2025-12-21T17:07:38.581Z"
+  },
+  "bridgeHub": "0xd588704447a6e04272568AD1CaFb43D71421D546"
 }
