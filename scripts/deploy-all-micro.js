@@ -7,7 +7,10 @@ const { deployGasCreditVault } = require('./deploy-gas-credit-vault');
 const { deployBridgeHub } = require('./deploy-bridge-hub');
 const { setupGatewayConnection } = require('./setup-gateway-connection');
 const { setupPermissions } = require('./setup-permissions');
-const { deployTokens } = require('./deploy-tokens');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+
+const execAsync = promisify(exec);
 
 async function main() {
   const networkName = hre.network.name;
@@ -33,12 +36,8 @@ async function main() {
     await deployMetaTxGateway(networkName);
     await deployGasCreditVault(networkName);
     await setupPermissions(networkName);
-    await deployTokens(networkName);
-    
-    if (config.isBridgeHubNetwork(networkName)) {
-      await deployBridgeHub(networkName);
-    }
-    
+
+    await execAsync(`npx hardhat deploy-tokens --network ${networkName}`);
     console.log(`\n✅ Deployment completed for ${networkName}`);
     
   } catch (error) {

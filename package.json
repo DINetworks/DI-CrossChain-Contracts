@@ -8,16 +8,7 @@
     "test:meta-tx": "hardhat test test/test-meta-tx-new.js",
     "compile": "hardhat compile",
     "clean": "hardhat clean",
-
-    "deploy:metatx": "hardhat run scripts/deploy-metatx.js --network crossfi",
-    "deploy:bridge": "hardhat run scripts/deploy-bridge.js --network crossfi",
-    "deploy:tokens": "hardhat run scripts/deploy-bridge-tokens.js --network crossfi",
     
-    "deploy:all": "node scripts/deploy-batch.js",
-    "deploy:single": "hardhat run scripts/deploy-all-chains.js",
-    "configure:states": "hardhat run scripts/configure-states.js",
-    
-    "whitelist-relayer": "hardhat run scripts/whitelist-relayer.js",
     "start:gmp-relayer": "cd relayer && npm run start:gmp",
     "extract-build": "node scripts/extract-build-info.js",
     "setup": "cp .env.example .env && cd relayer && npm run setup"

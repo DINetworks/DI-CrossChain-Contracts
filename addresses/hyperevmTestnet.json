@@ -11,7 +11,7 @@
         "symbol": "HYPE",
         "name": "HYPE",
         "decimals": 18,
-        "address": "0x6555555555555555555555555555555555555555",
+        "address": "0x5555555555555555555555555555555555555555",
         "isDeployed": false,
         "originSymbol": "HYPE"
       },
@@ -19,7 +19,7 @@
         "symbol": "XUSD",
         "name": "DI Bridged XUSD",
         "decimals": 18,
-        "address": "0xa30671BA6923DC55c1964500Cc314D6f6E88254c",
+        "address": "0x30333657C9D9Ff129B3cC7922d7851b1B3cd4B7a",
         "isDeployed": true,
         "originSymbol": "XUSD"
       },
@@ -27,7 +27,7 @@
         "symbol": "WXFI",
         "name": "DI Bridged Wrapped XFI",
         "decimals": 18,
-        "address": "0xFcf59A05a8d06A3F402b6EB0561AC8D828a087d1",
+        "address": "0x6eF612ACFA427661c12e54f5d7603f987cC42593",
         "isDeployed": true,
         "originSymbol": "XFI"
       },
@@ -35,7 +35,7 @@
         "symbol": "USDT",
         "name": "DI Bridged Tether USD",
         "decimals": 6,
-        "address": "0xF13EB894CC68f132E783dF976347C9876CD2db5e",
+        "address": "0x67d7D2AE8E0ff5e7f3eAa288493139fdcA0De6fb",
         "isDeployed": true,
         "originSymbol": "USDT"
       },
@@ -48,7 +48,7 @@
         "originSymbol": "USDC"
       }
     ],
-    "timestamp": "2025-12-21T21:00:16.134Z"
+    "timestamp": "2025-12-21T21:05:10.251Z"
   },
   "bridgeHub": "0x793A484453254341BA9d01f37bf099C48B40cb24"
 }
