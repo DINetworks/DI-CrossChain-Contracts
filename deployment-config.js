@@ -97,6 +97,7 @@ module.exports = {
       name: "HYPE",
       symbol: "HYPE",
       defaultDecimals: 18,
+      isStablecoin: false,
       chains: {
         [CHAIN_IDS.HYPEREVM]: {
           address: "0x5555555555555555555555555555555555555555",
@@ -108,17 +109,14 @@ module.exports = {
         }
       }
     },
-    XUSD: {
-      name: "XUSD",
-      symbol: "XUSD",
+    DUSD: {
+      name: "DUSD",
+      symbol: "DUSD",
       defaultDecimals: 18,
+      isStablecoin: true,
       chains: {
-        [CHAIN_IDS.CROSSFI_MAINNET]: {
+        [CHAIN_IDS.HYPEREVM_TESTNET]: {
           address: "0x8BD5Fe9286B039cc38d9B63865a8E87736382CCF",
-          decimals: 18
-        },
-        [CHAIN_IDS.CROSSFI_TESTNET]: {
-          address: "0x7D55FBbdBc11D3EeaC4a33867c5c79517Be3C703",
           decimals: 18
         }
       }
@@ -127,6 +125,7 @@ module.exports = {
       name: "Wrapped XFI",
       symbol: "WXFI",
       defaultDecimals: 18,
+      isStablecoin: false,
       chains: {
         [CHAIN_IDS.CROSSFI_MAINNET]: {
           address: "0xC537D12bd626B135B251cCa43283EFF69eC109c4",
@@ -142,6 +141,7 @@ module.exports = {
       name: "Tether USD",
       symbol: "USDT",
       defaultDecimals: 6,
+      isStablecoin: true,
       chains: {
         [CHAIN_IDS.BSC]: {
           address: "0x55d398326f99059fF775485246999027B3197955",
@@ -181,6 +181,7 @@ module.exports = {
       name: "USD Coin",
       symbol: "USDC",
       defaultDecimals: 6,
+      isStablecoin: true,
       chains: {
         [CHAIN_IDS.HYPEREVM]: {
           address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
@@ -260,7 +261,8 @@ module.exports = {
           symbol: tokenInfo.symbol,
           decimals: decimals,
           originSymbol: symbol,
-          address: chainConfig.address
+          address: chainConfig.address,
+          isStablecoin: tokenInfo.isStablecoin
         });
       } else {
         // Token needs to be deployed on this chain
@@ -268,7 +270,8 @@ module.exports = {
           name: `DI Bridged ${tokenInfo.name}`,
           symbol: tokenInfo.symbol,
           decimals: decimals,
-          originSymbol: symbol
+          originSymbol: symbol,
+          isStablecoin: tokenInfo.isStablecoin
         });
       }
     });

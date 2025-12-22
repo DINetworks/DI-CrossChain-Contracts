@@ -1,9 +1,9 @@
 {
-  "tokenTemplate": "0x6C43D0b60feC1a71F430a3F7116de2681f4cB764",
-  "tokenRegistry": "0x17d9BC23F3dDc42b813471E6a6a68C8d0510Fe1c",
-  "diGateway": "0x3C86A225bf960B29706BbCd8bA4E02610F90Cb59",
-  "metaTxGateway": "0xFA11616E739c2e78aF535ff4F317BE58cbe71a98",
-  "gasCreditVault": "0xae2338FF34D9e4e3F45d91E888dBb7c8a86ad871",
+  "tokenTemplate": "0x8A383C584e89Cae8A136696F9530fB6908D8548c",
+  "tokenRegistry": "0x0141d7c30bC29464cABd6338B7f95F471984b92b",
+  "diGateway": "0x8f03761E9f7cAbbc6A32ECB0815cE2C50cc90504",
+  "metaTxGateway": "0xb3659b5e55952899cA1CcD5B558d747CfF91037c",
+  "gasCreditVault": "0x57A7a388B5b5c6e610526aDfD60CBB952a001BFA",
   "tokenData": {
     "network": "crossfiTestnet",
     "tokens": [
@@ -11,17 +11,19 @@
         "symbol": "HYPE",
         "name": "DI Bridged HYPE",
         "decimals": 18,
-        "address": "0x69b68d07A8c192F7B849Ae6Ec872765EBF803D6C",
+        "address": "0x599DB6fB70A26FAf90F4a26E4368D8d4F37C5413",
         "isDeployed": true,
-        "originSymbol": "HYPE"
+        "originSymbol": "HYPE",
+        "isStablecoin": false
       },
       {
-        "symbol": "XUSD",
-        "name": "XUSD",
+        "symbol": "DUSD",
+        "name": "DI Bridged DUSD",
         "decimals": 18,
-        "address": "0x7D55FBbdBc11D3EeaC4a33867c5c79517Be3C703",
-        "isDeployed": false,
-        "originSymbol": "XUSD"
+        "address": "0xEf5370999Ded71b061dd15e7f44Ae58a1D26a846",
+        "isDeployed": true,
+        "originSymbol": "DUSD",
+        "isStablecoin": true
       },
       {
         "symbol": "WXFI",
@@ -29,25 +31,28 @@
         "decimals": 18,
         "address": "0x398D6abeF2D415C9E1545E8CFe94a5da71750fcd",
         "isDeployed": false,
-        "originSymbol": "XFI"
+        "originSymbol": "XFI",
+        "isStablecoin": false
       },
       {
         "symbol": "USDT",
         "name": "DI Bridged Tether USD",
         "decimals": 6,
-        "address": "0x6bA3a56E47aD67eb513472f7E694b35065cB5845",
+        "address": "0x96668Ed058C9efA5f1cb590944641e633FF57F3d",
         "isDeployed": true,
-        "originSymbol": "USDT"
+        "originSymbol": "USDT",
+        "isStablecoin": true
       },
       {
         "symbol": "USDC",
         "name": "DI Bridged USD Coin",
         "decimals": 6,
-        "address": "0x11EB36e9d843224d06194B8e9b879813F1f472CE",
+        "address": "0x3F1F5411B84724D637aEef7cc94aDd7b0ff6A6d3",
         "isDeployed": true,
-        "originSymbol": "USDC"
+        "originSymbol": "USDC",
+        "isStablecoin": true
       }
     ],
-    "timestamp": "2025-12-21T21:22:11.833Z"
+    "timestamp": "2025-12-22T20:23:40.441Z"
   }
 }

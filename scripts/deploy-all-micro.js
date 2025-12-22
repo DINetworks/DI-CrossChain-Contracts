@@ -34,7 +34,6 @@ async function main() {
     await deployGateway(networkName);
     await setupGatewayConnection(networkName);
     await deployMetaTxGateway(networkName);
-    await deployGasCreditVault(networkName);
     await setupPermissions(networkName);
 
     await execAsync(`npx hardhat deploy-tokens --network ${networkName}`);

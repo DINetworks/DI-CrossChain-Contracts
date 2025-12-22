@@ -1,9 +1,9 @@
 {
-  "tokenTemplate": "0xe0a0af16a65B96FCC5bba5Cb91851D450BE66a97",
-  "tokenRegistry": "0x40aA78faCF60c78f0d9A03dD60A98D80A4C6723F",
-  "diGateway": "0x1B3E0790490Bf352874eE715d8717572613414d7",
-  "metaTxGateway": "0x9D15DA4cA2cecB22131EC5F546599da434d44a54",
-  "gasCreditVault": "0x49388C138ED13Fb033D4B4a00553Fec6bd3E99F7",
+  "tokenTemplate": "0x9370D5038F99b16BCa916e43a216E8F36803ec57",
+  "tokenRegistry": "0x71DF6aF340D10339779eFa01C89BD918C93ab8Ca",
+  "diGateway": "0xCcbfD59486217AA0386372Cf8010C54086967921",
+  "metaTxGateway": "0x16C62711F699ad4F6360ffa0BEbD24C7A308447F",
+  "gasCreditVault": "0x5a55b9E1a18Fc898fa2DEa78B07f2168A70B9885",
   "tokenData": {
     "network": "hyperevmTestnet",
     "tokens": [
@@ -13,31 +13,35 @@
         "decimals": 18,
         "address": "0x5555555555555555555555555555555555555555",
         "isDeployed": false,
-        "originSymbol": "HYPE"
+        "originSymbol": "HYPE",
+        "isStablecoin": false
       },
       {
-        "symbol": "XUSD",
-        "name": "DI Bridged XUSD",
+        "symbol": "DUSD",
+        "name": "DUSD",
         "decimals": 18,
-        "address": "0x30333657C9D9Ff129B3cC7922d7851b1B3cd4B7a",
-        "isDeployed": true,
-        "originSymbol": "XUSD"
+        "address": "0x8BD5Fe9286B039cc38d9B63865a8E87736382CCF",
+        "isDeployed": false,
+        "originSymbol": "DUSD",
+        "isStablecoin": true
       },
       {
         "symbol": "WXFI",
         "name": "DI Bridged Wrapped XFI",
         "decimals": 18,
-        "address": "0x6eF612ACFA427661c12e54f5d7603f987cC42593",
+        "address": "0x19a7e73CcA9A431990692151F7b71E22561e8D51",
         "isDeployed": true,
-        "originSymbol": "XFI"
+        "originSymbol": "XFI",
+        "isStablecoin": false
       },
       {
         "symbol": "USDT",
-        "name": "DI Bridged Tether USD",
+        "name": "Tether USD",
         "decimals": 6,
-        "address": "0x67d7D2AE8E0ff5e7f3eAa288493139fdcA0De6fb",
-        "isDeployed": true,
-        "originSymbol": "USDT"
+        "address": "0x7f9722758a3e70210d78b107f9069cb12150e8a5",
+        "isDeployed": false,
+        "originSymbol": "USDT",
+        "isStablecoin": true
       },
       {
         "symbol": "USDC",
@@ -45,10 +49,11 @@
         "decimals": 6,
         "address": "0x2B3370eE501B4a559b57D449569354196457D8Ab",
         "isDeployed": false,
-        "originSymbol": "USDC"
+        "originSymbol": "USDC",
+        "isStablecoin": true
       }
     ],
-    "timestamp": "2025-12-21T21:05:10.251Z"
+    "timestamp": "2025-12-22T20:22:35.550Z"
   },
-  "bridgeHub": "0x793A484453254341BA9d01f37bf099C48B40cb24"
+  "bridgeHub": "0x3B3a336fb19BEAEF82202cF1d30fb2b5Cf4f2347"
 }

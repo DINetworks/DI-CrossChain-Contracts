@@ -97,10 +97,26 @@ function getAllNetworkTokenData() {
   return allNetworkData;
 }
 
+function getNetworkTokenData(networkName) {
+  const filePath = path.join(__dirname, '../../addresses', `${networkName}.json`);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return data.tokenData || null;
+  } catch (error) {
+    console.log(`Error reading ${networkName}.json:`, error.message);
+    return null;
+  }
+}
+
 module.exports = {
   saveContractAddress,
   saveTokenData,
   addTokenToFile,
   getAllNetworkTokenData,
+  getNetworkTokenData,
   getContractAddress
 };

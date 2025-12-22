@@ -18,7 +18,6 @@ contract BridgeHub is Ownable {
         string name;
         string rpcUrl;
         address gatewayAddress;
-        address gasCreditVault;
         address metaTxGateway;
         bool isActive;
         uint256 addedAt;
@@ -62,6 +61,11 @@ contract BridgeHub is Ownable {
         TokenDetail[] tokens;
     }
 
+    struct BridgeHubInfo {
+        address bridgeHubAddress;
+        address gasCreditVaultAddress;
+    }
+
     // Storage
     mapping(uint32 => ChainInfo) public supportedChains;
     mapping(string => TokenInfo) private tokenRegistry;
@@ -70,6 +74,8 @@ contract BridgeHub is Ownable {
     EnumerableSet.UintSet private chainIds;
     EnumerableSet.Bytes32Set private eventIds;
     string[] public tokenSymbols;
+    
+    address public gasCreditVaultAddress;
 
     // Events
     event ChainAdded(uint32 indexed chainId, string name, address gatewayAddress);
@@ -90,13 +96,17 @@ contract BridgeHub is Ownable {
 
     constructor() Ownable() {}
 
+    // Set GasCreditVault address (only for BridgeHub chain)
+    function setGasCreditVault(address _gasCreditVault) external onlyOwner {
+        gasCreditVaultAddress = _gasCreditVault;
+    }
+
     // Chain Management
     function addChain(
         uint32 chainId,
         string memory name,
         string memory rpcUrl,
         address gatewayAddress,
-        address gasCreditVault,
         address metaTxGateway
     ) external onlyOwner {
         require(chainId != 0, "Invalid chain ID");
@@ -107,7 +117,6 @@ contract BridgeHub is Ownable {
             name: name,
             rpcUrl: rpcUrl,
             gatewayAddress: gatewayAddress,
-            gasCreditVault: gasCreditVault,
             metaTxGateway: metaTxGateway,
             isActive: true,
             addedAt: block.timestamp
@@ -122,7 +131,6 @@ contract BridgeHub is Ownable {
         string memory name,
         string memory rpcUrl,
         address gatewayAddress,
-        address gasCreditVault,
         address metaTxGateway
     ) external onlyOwner {
         require(chainIds.contains(chainId), "Chain not supported");
@@ -131,7 +139,6 @@ contract BridgeHub is Ownable {
         chain.name = name;
         chain.rpcUrl = rpcUrl;
         chain.gatewayAddress = gatewayAddress;
-        chain.gasCreditVault = gasCreditVault;
         chain.metaTxGateway = metaTxGateway;
         
         emit ChainUpdated(chainId, name, gatewayAddress);
@@ -300,7 +307,7 @@ contract BridgeHub is Ownable {
         }
     }
 
-    function getDetailedChainsInfo() external view returns (DetailedChainInfo[] memory) {
+    function getDetailedChainsInfo() external view returns (DetailedChainInfo[] memory, BridgeHubInfo memory) {
         uint256 chainCount = chainIds.length();
         DetailedChainInfo[] memory detailedChains = new DetailedChainInfo[](chainCount);
         
@@ -338,6 +345,11 @@ contract BridgeHub is Ownable {
             });
         }
         
-        return detailedChains;
+        BridgeHubInfo memory bridgeHubInfo = BridgeHubInfo({
+            bridgeHubAddress: address(this),
+            gasCreditVaultAddress: gasCreditVaultAddress
+        });
+        
+        return (detailedChains, bridgeHubInfo);
     }
 }

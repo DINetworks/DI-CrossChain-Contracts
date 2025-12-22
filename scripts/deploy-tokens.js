@@ -46,7 +46,7 @@ async function deployTokens(networkName, force = false, tokenSymbol = null) {
           token.decimals,
           networkConfig.chainId,
           token.originSymbol,
-          true,
+          true, //Deploy New Token
           force
         );
         await deployTx.wait();
@@ -81,15 +81,14 @@ async function deployTokens(networkName, force = false, tokenSymbol = null) {
         decimals: token.decimals,
         address: tokenAddress,
         isDeployed: isDeployed,
-        originSymbol: token.originSymbol
+        originSymbol: token.originSymbol,
+        isStablecoin: token.isStablecoin
       };
       addTokenToFile(networkName, tokenInfo);
       
       // Save token info for BridgeHub registration
       deployedTokens.push(tokenInfo);
-      
-      await creditVaultContract.whitelistToken(tokenAddress, ZERO_ADDRESS, true);
-      console.log(`✅ Whitelisted ${token.symbol} in credit vault`);
+
     } catch (error) {
       console.error(`❌ Error processing token ${token.symbol}:`, error.message);
     }

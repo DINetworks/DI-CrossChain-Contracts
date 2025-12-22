@@ -84,7 +84,7 @@ contract DIBridgedTokenRegistry is Ownable {
                 decimals,
                 originChainId,
                 originSymbol,
-                gateway,
+                address(this),
                 owner()
             );
 

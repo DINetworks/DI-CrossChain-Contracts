@@ -2,7 +2,91 @@ const hre = require("hardhat");
 const { ethers } = require("hardhat");
 const fs = require('fs');
 const config = require('../deployment-config.js');
-const { getContractAddress, getAllNetworkTokenData } = require('./utils/address-manager');
+const { getContractAddress, getAllNetworkTokenData, getNetworkTokenData } = require('./utils/address-manager');
+const { RELAYER } = config;
+
+async function whitelistTokensInGasCreditVault() {
+    console.log("=== Whitelisting Tokens in GasCreditVault ===");
+    
+    const networkName = hre.network.name;
+    const bridgeHubInfo = config.getBridgeHubNetwork();
+    
+    if (!bridgeHubInfo || bridgeHubInfo.networkName !== networkName) {
+        console.log(`⚠ Skipping token whitelisting - not running on BridgeHub network (${bridgeHubInfo?.networkName})`);
+        return;
+    }
+    
+    const gasCreditVaultAddress = getContractAddress(networkName, 'gasCreditVault');
+    if (!gasCreditVaultAddress) {
+        console.log(`⚠ GasCreditVault not found for ${networkName}`);
+        return;
+    }
+    
+    console.log(`Using GasCreditVault address: ${gasCreditVaultAddress}`);
+
+    const [deployer] = await ethers.getSigners();
+    console.log("Deployer:", deployer.address);
+
+    const GasCreditVault = await ethers.getContractFactory("GasCreditVault");
+    const gasCreditVault = GasCreditVault.attach(gasCreditVaultAddress);
+
+    // Get tokens from BridgeHub network using address-manager
+    const bridgeHubTokenData = getNetworkTokenData(bridgeHubInfo.networkName);
+    if (!bridgeHubTokenData || !bridgeHubTokenData.tokens) {
+        console.log(`⚠ No token data found for BridgeHub network: ${bridgeHubInfo.networkName}`);
+        return;
+    }
+    
+    const bridgeHubTokens = bridgeHubTokenData.tokens;
+    console.log(`\n--- Processing ${bridgeHubTokens.length} tokens from BridgeHub network ---`);
+
+    for (const token of bridgeHubTokens) {
+        // Skip tokens without valid addresses
+        if (!token.address || token.address === "0x0000000000000000000000000000000000000000") {
+            console.log(`⚠ Skipping ${token.symbol} - no valid address`);
+            continue;
+        }
+
+        try {
+            // Check if token is already whitelisted
+            const isWhitelisted = await gasCreditVault.isTokenWhitelisted(token.address);
+            if (isWhitelisted) {
+                console.log(`✓ Token ${token.symbol} already whitelisted`);
+                continue;
+            }
+
+            // Whitelist token in GasCreditVault
+            const priceFeed = token.priceFeed || "0x0000000000000000000000000000000000000000";
+            const isStablecoin = token.isStablecoin || false;
+            
+            await gasCreditVault.whitelistToken(
+                token.address,
+                priceFeed,
+                isStablecoin
+            );
+            
+            console.log(`✓ Whitelisted ${token.symbol} in GasCreditVault`);
+            console.log(`  Address: ${token.address}`);
+            console.log(`  Price Feed: ${priceFeed}`);
+            console.log(`  Is Stablecoin: ${isStablecoin}`);
+        } catch (error) {
+            console.log(`⚠ Failed to whitelist ${token.symbol}:`, error.message);
+        }
+    }
+
+    // Add relayer to whitelist
+    try {
+        const isRelayerWhitelisted = await gasCreditVault.isRelayerWhitelisted(config.RELAYER);
+        if (!isRelayerWhitelisted) {
+            await gasCreditVault.addWhitelistedRelayer(config.RELAYER);
+            console.log(`✓ Added relayer to whitelist: ${config.RELAYER}`);
+        } else {
+            console.log(`✓ Relayer already whitelisted: ${config.RELAYER}`);
+        }
+    } catch (error) {
+        console.log(`⚠ Failed to whitelist relayer:`, error.message);
+    }
+}
 
 async function registerTokensWithBridgeHub() {
     console.log("=== Registering Tokens with BridgeHub ===");
@@ -87,7 +171,6 @@ async function registerChainsWithBridgeHub() {
 
         try {
             const gatewayAddress = getContractAddress(networkData.network, 'diGateway') || "0x0000000000000000000000000000000000000000";
-            const gasCreditVault = getContractAddress(networkData.network, 'gasCreditVault') || "0x0000000000000000000000000000000000000000";
             const metaTxGateway = getContractAddress(networkData.network, 'metaTxGateway') || "0x0000000000000000000000000000000000000000";
             
             await bridgeHub.addChain(
@@ -95,7 +178,6 @@ async function registerChainsWithBridgeHub() {
                 networkConfig.name,
                 networkConfig.rpcKey,
                 gatewayAddress,
-                gasCreditVault,
                 metaTxGateway
             );
             console.log(`✓ Registered chain ${networkConfig.name} (${networkConfig.chainId})`);
@@ -109,9 +191,46 @@ async function main() {
     // Register chains and tokens with BridgeHub
     await registerChainsWithBridgeHub();
     await registerTokensWithBridgeHub();
+    
+    // Set GasCreditVault address for BridgeHub
+    await setGasCreditVaultAddress();
+    
+    // Whitelist tokens in GasCreditVault (only on BridgeHub chain)
+    await whitelistTokensInGasCreditVault();
 }
 
-module.exports = { registerTokensWithBridgeHub, registerChainsWithBridgeHub };
+async function setGasCreditVaultAddress() {
+    console.log("=== Setting GasCreditVault Address in BridgeHub ===");
+    
+    const networkName = hre.network.name;
+    const bridgeHubInfo = config.getBridgeHubNetwork();
+    
+    if (!bridgeHubInfo || bridgeHubInfo.networkName !== networkName) {
+        console.log(`⚠ Skipping GasCreditVault address setting - not running on BridgeHub network`);
+        return;
+    }
+    
+    const bridgeHubAddress = getContractAddress(networkName, 'bridgeHub');
+    const gasCreditVaultAddress = getContractAddress(networkName, 'gasCreditVault');
+    
+    if (!gasCreditVaultAddress) {
+        console.log(`⚠ GasCreditVault address not found for ${networkName}`);
+        return;
+    }
+    
+    const [deployer] = await ethers.getSigners();
+    const BridgeHub = await ethers.getContractFactory("BridgeHub");
+    const bridgeHub = BridgeHub.attach(bridgeHubAddress);
+    
+    try {
+        await bridgeHub.setGasCreditVault(gasCreditVaultAddress);
+        console.log(`✓ Set GasCreditVault address: ${gasCreditVaultAddress}`);
+    } catch (error) {
+        console.log(`⚠ Failed to set GasCreditVault address:`, error.message);
+    }
+}
+
+module.exports = { registerTokensWithBridgeHub, registerChainsWithBridgeHub, whitelistTokensInGasCreditVault, setGasCreditVaultAddress };
 
 if (require.main === module) {
     main()

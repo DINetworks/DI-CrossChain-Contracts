@@ -9,11 +9,10 @@ async function setupPermissions(networkName) {
   
   const gatewayContract = await ethers.getContractAt("DIGateway", getContractAddress(networkName, 'diGateway'));
   const metaTxGatewayContract = await ethers.getContractAt("MetaTxGateway", getContractAddress(networkName, 'metaTxGateway'));
-  const creditVaultContract = await ethers.getContractAt("GasCreditVault", getContractAddress(networkName, 'gasCreditVault'));
   
   await gatewayContract.addRelayer(RELAYER);
   await metaTxGatewayContract.setRelayerAuthorization(RELAYER, true);
-  await creditVaultContract.addWhitelistedRelayer(RELAYER);
+
   console.log('✅ Relayer permissions set');
 }
 

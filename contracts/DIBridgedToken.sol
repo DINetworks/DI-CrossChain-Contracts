@@ -9,11 +9,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Template for bridged tokens that can be minted/burned by DIGateway
  */
 contract DIBridgedToken is ERC20, Ownable {
-    address public gateway;
+    address public tokenRegistry;
     uint32 public originChainId;
     string public originSymbol;
-    
-    event GatewayUpdated(address indexed oldGateway, address indexed newGateway);
     
     constructor() ERC20("", "") Ownable() {}
     
@@ -23,7 +21,7 @@ contract DIBridgedToken is ERC20, Ownable {
         uint8 decimals_,
         uint32 originChainId_,
         string memory originSymbol_,
-        address gateway_,
+        address tokenRegistry_,
         address owner_
     ) external {
         require(bytes(_name).length == 0, "Already initialized");
@@ -33,27 +31,21 @@ contract DIBridgedToken is ERC20, Ownable {
         _decimals = decimals_;
         originChainId = originChainId_;
         originSymbol = originSymbol_;
-        gateway = gateway_;
+        tokenRegistry = tokenRegistry_;
         _transferOwnership(owner_);
     }
     
-    modifier onlyGateway() {
-        require(msg.sender == gateway, "Only gateway");
+    modifier onlyTokenRegistry() {
+        require(msg.sender == tokenRegistry, "Only token registry");
         _;
     }
     
-    function mint(address to, uint256 amount) external onlyGateway {
+    function mint(address to, uint256 amount) external onlyTokenRegistry {
         _mint(to, amount);
     }
     
-    function burn(address from, uint256 amount) external onlyGateway {
+    function burn(address from, uint256 amount) external onlyTokenRegistry {
         _burn(from, amount);
-    }
-    
-    function setGateway(address newGateway) external onlyOwner {
-        require(newGateway != address(0), "Invalid gateway");
-        emit GatewayUpdated(gateway, newGateway);
-        gateway = newGateway;
     }
     
     function decimals() public view override returns (uint8) {
