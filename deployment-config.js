@@ -147,6 +147,14 @@ module.exports = {
           address: "0x55d398326f99059fF775485246999027B3197955",
           decimals: 18
         },
+        [CHAIN_IDS.SEPOLIA]: {
+          address: "0xA1d7f71cbBb361A77820279958BAC38fC3667c1a",
+          decimals: 6
+        },
+        [CHAIN_IDS.HYPEREVM_TESTNET]: {
+          address: "0x7f9722758a3e70210d78b107f9069cb12150e8a5",
+          decimals: 6
+        },
         [CHAIN_IDS.HYPEREVM]: {
           address: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
           decimals: 6
@@ -180,6 +188,10 @@ module.exports = {
         },
         [CHAIN_IDS.HYPEREVM_TESTNET]: {
           address: "0x2B3370eE501B4a559b57D449569354196457D8Ab",
+          decimals: 6
+        },
+        [CHAIN_IDS.SEPOLIA]: {
+          address: "0x51fCe89b9f6D4c530698f181167043e1bB4abf89",
           decimals: 6
         },
         [CHAIN_IDS.BSC]: {

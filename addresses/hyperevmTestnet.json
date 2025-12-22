@@ -3,7 +3,7 @@
   "tokenRegistry": "0x40aA78faCF60c78f0d9A03dD60A98D80A4C6723F",
   "diGateway": "0x1B3E0790490Bf352874eE715d8717572613414d7",
   "metaTxGateway": "0x9D15DA4cA2cecB22131EC5F546599da434d44a54",
-  "gasCreditVault": "0xb462A9A779ea876Ec5fFaB16cc1097F9289a280B",
+  "gasCreditVault": "0x49388C138ED13Fb033D4B4a00553Fec6bd3E99F7",
   "tokenData": {
     "network": "hyperevmTestnet",
     "tokens": [
