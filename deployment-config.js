@@ -116,7 +116,7 @@ module.exports = {
       isStablecoin: true,
       chains: {
         [CHAIN_IDS.HYPEREVM_TESTNET]: {
-          address: "0x8BD5Fe9286B039cc38d9B63865a8E87736382CCF",
+          address: "0x438Ee9A33d6182BD8603778E9Ff25bbd4c12B74e",
           decimals: 18
         }
       }

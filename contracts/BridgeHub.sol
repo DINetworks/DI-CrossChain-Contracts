@@ -19,6 +19,7 @@ contract BridgeHub is Ownable {
         string rpcUrl;
         address gatewayAddress;
         address metaTxGateway;
+        address tokenRegistryAddress;
         bool isActive;
         uint256 addedAt;
     }
@@ -107,7 +108,8 @@ contract BridgeHub is Ownable {
         string memory name,
         string memory rpcUrl,
         address gatewayAddress,
-        address metaTxGateway
+        address metaTxGateway,
+        address tokenRegistryAddress
     ) external onlyOwner {
         require(chainId != 0, "Invalid chain ID");
         require(bytes(name).length > 0, "Invalid name");
@@ -118,6 +120,7 @@ contract BridgeHub is Ownable {
             rpcUrl: rpcUrl,
             gatewayAddress: gatewayAddress,
             metaTxGateway: metaTxGateway,
+            tokenRegistryAddress: tokenRegistryAddress,
             isActive: true,
             addedAt: block.timestamp
         });

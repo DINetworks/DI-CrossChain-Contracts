@@ -31,7 +31,6 @@ async function deployTokens(networkName, force = false, tokenSymbol = null) {
   const deployedTokens = [];
 
   const tokenRegistryContract = await ethers.getContractAt("DIBridgedTokenRegistry", getContractAddress(networkName, 'tokenRegistry'));
-  const creditVaultContract = await ethers.getContractAt("GasCreditVault", getContractAddress(networkName, 'gasCreditVault'));
   
   for (const token of tokens) {
     try {

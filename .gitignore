@@ -36,3 +36,7 @@ config.json
 /.openzeppelin
 /.openzeppelin
 .openzeppelin/unknown-4157.json
+/bin
+/bin/contracts
+/.openzeppelin
+/.openzeppelin

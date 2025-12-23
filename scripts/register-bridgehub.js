@@ -172,13 +172,15 @@ async function registerChainsWithBridgeHub() {
         try {
             const gatewayAddress = getContractAddress(networkData.network, 'diGateway') || "0x0000000000000000000000000000000000000000";
             const metaTxGateway = getContractAddress(networkData.network, 'metaTxGateway') || "0x0000000000000000000000000000000000000000";
+            const tokenRegistryAddress = getContractAddress(networkData.network, 'tokenRegistry') || "0x00000000000000000000000000000000000000";
             
             await bridgeHub.addChain(
                 networkConfig.chainId,
                 networkConfig.name,
                 networkConfig.rpcKey,
                 gatewayAddress,
-                metaTxGateway
+                metaTxGateway,
+                tokenRegistryAddress
             );
             console.log(`✓ Registered chain ${networkConfig.name} (${networkConfig.chainId})`);
         } catch (error) {

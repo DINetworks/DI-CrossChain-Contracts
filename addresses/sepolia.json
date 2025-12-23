@@ -1,0 +1,57 @@
+{
+  "tokenTemplate": "0xA0d0D1109CFb959BE877dFf8f0FFe3BcB920af22",
+  "tokenRegistry": "0xC1082420B453cACD92a1C9dE8d5cae5346a19BDf",
+  "diGateway": "0x62ED52652477337B392e9d42C1cc1f9a94c53505",
+  "metaTxGateway": "0x8Ee847Db30f5a201ba2D25E69c41c80330465e4b",
+  "tokenData": {
+    "network": "sepolia",
+    "tokens": [
+      {
+        "symbol": "HYPE",
+        "name": "DI Bridged HYPE",
+        "decimals": 18,
+        "address": "0xbcf2E7685BC0224A8709b6342d59b6BA8C5E91e8",
+        "isDeployed": true,
+        "originSymbol": "HYPE",
+        "isStablecoin": false
+      },
+      {
+        "symbol": "DUSD",
+        "name": "DI Bridged DUSD",
+        "decimals": 18,
+        "address": "0xbA3027dA9c28b051c74e48A5974Cc4BaBaD4cd5F",
+        "isDeployed": true,
+        "originSymbol": "DUSD",
+        "isStablecoin": true
+      },
+      {
+        "symbol": "WXFI",
+        "name": "DI Bridged Wrapped XFI",
+        "decimals": 18,
+        "address": "0x213487f8B1f9b58641Cbb8fB05195Ba9E7c4Ef1C",
+        "isDeployed": true,
+        "originSymbol": "XFI",
+        "isStablecoin": false
+      },
+      {
+        "symbol": "USDT",
+        "name": "Tether USD",
+        "decimals": 6,
+        "address": "0xA1d7f71cbBb361A77820279958BAC38fC3667c1a",
+        "isDeployed": false,
+        "originSymbol": "USDT",
+        "isStablecoin": true
+      },
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "address": "0x51fCe89b9f6D4c530698f181167043e1bB4abf89",
+        "isDeployed": false,
+        "originSymbol": "USDC",
+        "isStablecoin": true
+      }
+    ],
+    "timestamp": "2025-12-22T21:46:37.236Z"
+  }
+}

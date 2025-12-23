@@ -20,7 +20,7 @@
         "symbol": "DUSD",
         "name": "DUSD",
         "decimals": 18,
-        "address": "0x8BD5Fe9286B039cc38d9B63865a8E87736382CCF",
+        "address": "0x438Ee9A33d6182BD8603778E9Ff25bbd4c12B74e",
         "isDeployed": false,
         "originSymbol": "DUSD",
         "isStablecoin": true
@@ -53,7 +53,7 @@
         "isStablecoin": true
       }
     ],
-    "timestamp": "2025-12-22T20:22:35.550Z"
+    "timestamp": "2025-12-23T07:18:16.727Z"
   },
-  "bridgeHub": "0x3B3a336fb19BEAEF82202cF1d30fb2b5Cf4f2347"
+  "bridgeHub": "0x1Ba38828Aa8432fC18f6E5DE190D180eB36D6BdB"
 }
