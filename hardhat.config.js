@@ -132,6 +132,14 @@ module.exports = {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://avalanche.routescan.io"
         }
+      },
+      {
+        network: "hyperevmTestnet",
+        chainId: 998,
+        urls: {
+          apiURL: "https://sourcify.parsec.finance",
+          browserURL: "https://testnet.purrsec.com/"
+        }
       }
     ]
   },
