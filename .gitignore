@@ -5,6 +5,8 @@ node_modules
 /cache
 /artifacts
 /flatten_contract
+/bin
+/.openzeppelin
 
 # TypeChain files
 /typechain
@@ -17,12 +19,6 @@ node_modules
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
 
-# Relayer files
-relayer/config.json
-relayer/meta-tx-config.json
-relayer/processed_events.json
-relayer/failed_transactions.json
-
 # IDE files
 .vscode/settings.json
 .idea/
@@ -33,10 +29,5 @@ relayer/failed_transactions.json
 .DS_Store
 Thumbs.db
 config.json
-/.openzeppelin
-/.openzeppelin
-.openzeppelin/unknown-4157.json
-/bin
-/bin/contracts
-/.openzeppelin
-/.openzeppelin
+.openzeppelin/sepolia.json
+bin/contracts/DIGateway.abi
