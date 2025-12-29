@@ -94,7 +94,7 @@ function burnToken(string memory symbol, address from, uint256 amount)
 ## Contract Interactions
 
 ```mermaid
-graph TD
+flowchart TD
     A[User] --> B[DIGateway]
     B --> C[DIBridgedTokenRegistry]
     C --> D[DIBridgedToken]
