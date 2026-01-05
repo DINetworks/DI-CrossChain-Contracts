@@ -1,5 +1,5 @@
 {
-  "name": "xfi-contracts",
+  "name": "di-crosschain-contracts",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
