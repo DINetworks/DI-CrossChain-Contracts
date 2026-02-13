@@ -40,29 +40,12 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    hyperevm: {
-      chainId: 999,
-      url: process.env.HYPEREVM_RPC_URL || "",
+    etherlinkShadownet: {
+      chainId: 127823,
+      url: process.env.ETHERLINK_RPC_URL || "https://node.shadownet.etherlink.com",
       accounts: [process.env.PRIVATE_KEY],
       timeout: 120000, // 2 minutes
       confirmations: 2
-    },
-    hyperevmTestnet: {
-      chainId: 998,
-      url: process.env.HYPEREVM_RPC_TESTNET_URL || "",
-      accounts: [process.env.PRIVATE_KEY],
-      timeout: 120000, // 2 minutes
-      confirmations: 2
-    },
-    crossfiTestnet: {
-      chainId: 4157,
-      url: process.env.CROSSFI_RPC_TESTNET_URL,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-    crossfiMainnet: {
-      chainId: 4158,
-      url: process.env.CROSSFI_RPC_URL,
-      accounts: [process.env.PRIVATE_KEY],
     },
     mainnet: {
       url: process.env.MAINNET_RPC_URL || "",
@@ -118,14 +101,6 @@ module.exports = {
     apiKey: process.env.ETHERSCAN_API_KEY,
     customChains: [
       {
-        network: "crossfi",
-        chainId: 4157,
-        urls: {
-          apiURL: "https://test.xfiscan.com/api",     // block explorer API
-          browserURL: "https://test.xfiscan.com",     // explorer base URL
-        },
-      },
-      {
         network: "avalanche",
         chainId: 43114,
         urls: {
@@ -134,11 +109,11 @@ module.exports = {
         }
       },
       {
-        network: "hyperevmTestnet",
-        chainId: 998,
+        network: "etherlinkShadownet",
+        chainId: 127823,
         urls: {
-          apiURL: "https://sourcify.parsec.finance",
-          browserURL: "https://testnet.purrsec.com/"
+          apiURL: "https://shadownet.explorer.etherlink.com/api",
+          browserURL: "https://shadownet.explorer.etherlink.com"
         }
       }
     ]

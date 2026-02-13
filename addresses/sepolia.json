@@ -1,37 +1,19 @@
 {
-  "tokenTemplate": "0xA0d0D1109CFb959BE877dFf8f0FFe3BcB920af22",
-  "tokenRegistry": "0xC1082420B453cACD92a1C9dE8d5cae5346a19BDf",
-  "diGateway": "0x62ED52652477337B392e9d42C1cc1f9a94c53505",
-  "metaTxGateway": "0x8Ee847Db30f5a201ba2D25E69c41c80330465e4b",
+  "tokenTemplate": "0x46B8c05DA98502825B8B29Be950CbcAD94FcE322",
+  "tokenRegistry": "0x9D15DA4cA2cecB22131EC5F546599da434d44a54",
+  "diGateway": "0xb462A9A779ea876Ec5fFaB16cc1097F9289a280B",
+  "metaTxGateway": "0x93cea34A09716a965b29693D082f0f53f4EB3d46",
   "tokenData": {
     "network": "sepolia",
     "tokens": [
       {
-        "symbol": "HYPE",
-        "name": "DI Bridged HYPE",
-        "decimals": 18,
-        "address": "0xbcf2E7685BC0224A8709b6342d59b6BA8C5E91e8",
-        "isDeployed": true,
-        "originSymbol": "HYPE",
-        "isStablecoin": false
-      },
-      {
         "symbol": "DUSD",
         "name": "DI Bridged DUSD",
         "decimals": 18,
-        "address": "0xbA3027dA9c28b051c74e48A5974Cc4BaBaD4cd5F",
+        "address": "0x1a4C8bF3D3fd6d4E2f9E715b6B05eC200DdF27ca",
         "isDeployed": true,
         "originSymbol": "DUSD",
         "isStablecoin": true
-      },
-      {
-        "symbol": "WXFI",
-        "name": "DI Bridged Wrapped XFI",
-        "decimals": 18,
-        "address": "0x213487f8B1f9b58641Cbb8fB05195Ba9E7c4Ef1C",
-        "isDeployed": true,
-        "originSymbol": "XFI",
-        "isStablecoin": false
       },
       {
         "symbol": "USDT",
@@ -52,6 +34,6 @@
         "isStablecoin": true
       }
     ],
-    "timestamp": "2025-12-22T21:46:37.236Z"
+    "timestamp": "2026-02-13T09:56:15.197Z"
   }
 }

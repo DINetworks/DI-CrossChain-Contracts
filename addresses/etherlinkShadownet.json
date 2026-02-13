@@ -1,0 +1,41 @@
+{
+  "tokenTemplate": "0xE9f68Fa7FFef49e2Be71C1F011C45eD4e85b88F8",
+  "tokenRegistry": "0x196295D637a97C7fF941eF4Bd112C6ab574A15B9",
+  "diGateway": "0x74442596EaC4DB1841DECfD7d1CB75F0E41F5B1F",
+  "metaTxGateway": "0xB2b0C2c8f94A64890BDf391367FFB1d781f3d0aC",
+  "tokenData": {
+    "network": "etherlinkShadownet",
+    "tokens": [
+      {
+        "symbol": "DUSD",
+        "name": "DI Bridged DUSD",
+        "decimals": 18,
+        "address": "0x3d815E5F0392C41004E85AF49D8253665cc8a26C",
+        "isDeployed": true,
+        "originSymbol": "DUSD",
+        "isStablecoin": true
+      },
+      {
+        "symbol": "USDT",
+        "name": "Tether USD",
+        "decimals": 6,
+        "address": "0x05382A914d4e46ddFC8608BbA03cD3D25dBE886E",
+        "isDeployed": false,
+        "originSymbol": "USDT",
+        "isStablecoin": true
+      },
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "decimals": 6,
+        "address": "0x064455f03b93bc1cDb8197F718aa055AE3115400",
+        "isDeployed": false,
+        "originSymbol": "USDC",
+        "isStablecoin": true
+      }
+    ],
+    "timestamp": "2026-02-13T08:32:14.975Z"
+  },
+  "bridgeHub": "0x8d0366bC32F90562CB56D2A3adC3c3eed89cdAbb",
+  "gasCreditVault": "0xB53f4D1e4C04B2Caa772cF7816727ca684bA4F9d"
+}

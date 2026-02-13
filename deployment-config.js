@@ -1,10 +1,7 @@
 // Centralized deployment configuration
   // Chain ID constants
 const CHAIN_IDS = {
-  HYPEREVM: 999,
-  HYPEREVM_TESTNET: 998,
-  CROSSFI_MAINNET: 4158,
-  CROSSFI_TESTNET: 4157,
+  ETHERLINK_SHADOWNET: 127823,
   SEPOLIA: 11155111,
   BSC: 56,
   POLYGON: 137,
@@ -22,10 +19,10 @@ module.exports = {
   ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
   // Supported networks configuration
   NETWORKS: {
-    hyperevmTestnet: {
-      chainId: CHAIN_IDS.HYPEREVM_TESTNET,
-      name: 'HyperEVM Testnet',
-      rpcKey: 'https://rpc.hyperliquid-testnet.xyz/evm',
+    etherlinkShadownet: {
+      chainId: CHAIN_IDS.ETHERLINK_SHADOWNET,
+      name: 'Etherlink Shadownet',
+      rpcKey: 'https://node.shadownet.etherlink.com',
       enabled: true,
       isBridgeHub: true
     },
@@ -33,24 +30,6 @@ module.exports = {
       chainId: CHAIN_IDS.SEPOLIA,
       name: 'Ethereum Sepolia',
       rpcKey: 'https://ethereum-sepolia-rpc.publicnode.com',
-      enabled: true
-    },
-    crossfiTestnet: {
-      chainId: CHAIN_IDS.CROSSFI_TESTNET,
-      name: 'CrossFi Testnet',
-      rpcKey: 'https://rpc.testnet.ms/',
-      enabled: true
-    },
-    hyperevm: {
-      chainId: CHAIN_IDS.HYPEREVM,
-      name: 'HyperEVM',
-      rpcKey: 'https://rpc.hyperliquid.xyz/evm',
-      enabled: true
-    },
-    crossfiMainnet: {
-      chainId: CHAIN_IDS.CROSSFI_MAINNET,
-      name: 'CrossFi Mainnet',
-      rpcKey: 'https://rpc.mainnet.ms/',
       enabled: true
     },
     bsc: {
@@ -93,48 +72,12 @@ module.exports = {
 
   // Token configurations with contract addresses and decimals by chain
   TOKEN_CONTRACTS: {
-    HYPE: {
-      name: "HYPE",
-      symbol: "HYPE",
-      defaultDecimals: 18,
-      isStablecoin: false,
-      chains: {
-        [CHAIN_IDS.HYPEREVM]: {
-          address: "0x5555555555555555555555555555555555555555",
-          decimals: 18
-        },
-        [CHAIN_IDS.HYPEREVM_TESTNET]: {
-          address: "0x5555555555555555555555555555555555555555",
-          decimals: 18
-        }
-      }
-    },
     DUSD: {
       name: "DUSD",
       symbol: "DUSD",
       defaultDecimals: 18,
       isStablecoin: true,
       chains: {
-        [CHAIN_IDS.HYPEREVM_TESTNET]: {
-          address: "0x438Ee9A33d6182BD8603778E9Ff25bbd4c12B74e",
-          decimals: 18
-        }
-      }
-    },
-    XFI: {
-      name: "Wrapped XFI",
-      symbol: "WXFI",
-      defaultDecimals: 18,
-      isStablecoin: false,
-      chains: {
-        [CHAIN_IDS.CROSSFI_MAINNET]: {
-          address: "0xC537D12bd626B135B251cCa43283EFF69eC109c4",
-          decimals: 18
-        },
-        [CHAIN_IDS.CROSSFI_TESTNET]: {
-          address: "0x398D6abeF2D415C9E1545E8CFe94a5da71750fcd",
-          decimals: 18
-        }
       }
     },
     USDT: {
@@ -151,12 +94,8 @@ module.exports = {
           address: "0xA1d7f71cbBb361A77820279958BAC38fC3667c1a",
           decimals: 6
         },
-        [CHAIN_IDS.HYPEREVM_TESTNET]: {
-          address: "0x7f9722758a3e70210d78b107f9069cb12150e8a5",
-          decimals: 6
-        },
-        [CHAIN_IDS.HYPEREVM]: {
-          address: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        [CHAIN_IDS.ETHERLINK_SHADOWNET]: {
+          address: "0x05382A914d4e46ddFC8608BbA03cD3D25dBE886E",
           decimals: 6
         },
         [CHAIN_IDS.POLYGON]: {
@@ -183,12 +122,8 @@ module.exports = {
       defaultDecimals: 6,
       isStablecoin: true,
       chains: {
-        [CHAIN_IDS.HYPEREVM]: {
-          address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
-          decimals: 6
-        },
-        [CHAIN_IDS.HYPEREVM_TESTNET]: {
-          address: "0x2B3370eE501B4a559b57D449569354196457D8Ab",
+        [CHAIN_IDS.ETHERLINK_SHADOWNET]: {
+          address: "0x064455f03b93bc1cDb8197F718aa055AE3115400",
           decimals: 6
         },
         [CHAIN_IDS.SEPOLIA]: {
